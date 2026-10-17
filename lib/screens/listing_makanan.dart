@@ -132,6 +132,19 @@ class FoodCard extends StatelessWidget {
             height: 140,
             width: double.infinity,
             fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                height: 140,
+                width: double.infinity,
+                color: Colors.grey.shade200,
+                child: const Icon(
+                  Icons.broken_image_outlined,
+                  size: 48,
+                  color: Colors.grey,
+                  semanticLabel: 'Gambar makanan tidak tersedia',
+                ),
+              );
+            },
           ),
           Padding(
             padding: const EdgeInsets.all(16.0),

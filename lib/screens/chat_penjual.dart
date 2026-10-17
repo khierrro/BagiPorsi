@@ -10,9 +10,22 @@ class ChatPenjual extends StatelessWidget {
         titleSpacing: 0,
         title: Row(
           children: [
-            const CircleAvatar(
+            CircleAvatar(
               radius: 20,
-              backgroundImage: NetworkImage('https://picsum.photos/100?random=5'),
+              child: ClipOval(
+                child: Image.network(
+                  'https://picsum.photos/100?random=5',
+                  width: 40,
+                  height: 40,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(
+                      Icons.storefront,
+                      semanticLabel: 'Foto penjual tidak tersedia',
+                    );
+                  },
+                ),
+              ),
             ),
             const SizedBox(width: 12),
             Column(
