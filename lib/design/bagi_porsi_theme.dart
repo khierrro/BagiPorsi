@@ -1,0 +1,60 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+abstract final class BagiPorsiColors {
+  static const green = Color(0xFF006B50);
+  static const deepGreen = Color(0xFF005747);
+  static const ink = Color(0xFF183C32);
+  static const mint = Color(0xFFEAF9F5);
+  static const lime = Color(0xFFE6F3DA);
+  static const canvas = Color(0xFFF7F8F7);
+  static const border = Color(0xFFE6EAE8);
+  static const muted = Color(0xFF717471);
+  static const orange = Color(0xFFFF6D00);
+}
+
+abstract final class BagiPorsiTheme {
+  static ThemeData get data => ThemeData(
+    useMaterial3: true,
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: BagiPorsiColors.green,
+      surface: Colors.white,
+    ),
+    scaffoldBackgroundColor: Colors.white,
+    appBarTheme: const AppBarTheme(
+      backgroundColor: BagiPorsiColors.green,
+      foregroundColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      centerTitle: false,
+      systemOverlayStyle: SystemUiOverlayStyle(
+        statusBarColor: BagiPorsiColors.green,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+    ),
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: Colors.white,
+      elevation: 0,
+      height: 78,
+      indicatorColor: BagiPorsiColors.mint,
+      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+      iconTheme: WidgetStateProperty.resolveWith((states) {
+        return IconThemeData(
+          size: 24,
+          color: states.contains(WidgetState.selected)
+              ? BagiPorsiColors.green
+              : BagiPorsiColors.muted,
+        );
+      }),
+      labelTextStyle: WidgetStateProperty.resolveWith((states) {
+        final selected = states.contains(WidgetState.selected);
+        return TextStyle(
+          color: selected ? BagiPorsiColors.green : BagiPorsiColors.muted,
+          fontSize: 11,
+          fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+        );
+      }),
+    ),
+  );
+}

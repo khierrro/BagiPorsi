@@ -2,19 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:zerohunger/main.dart';
-import 'package:zerohunger/screens/chat_penjual.dart';
+import 'package:zerohunger/screens/pilih_restoran.dart';
 import 'package:zerohunger/screens/listing_makanan.dart';
 import 'package:zerohunger/screens/peta.dart';
 import 'package:zerohunger/screens/profil.dart';
 
 void main() {
+  setUp(() {
+    final dispatcher =
+        TestWidgetsFlutterBinding.ensureInitialized().platformDispatcher;
+    dispatcher.accessibilityFeaturesTestValue = FakeAccessibilityFeatures(
+      disableAnimations: true,
+    );
+    addTearDown(dispatcher.clearAccessibilityFeaturesTestValue);
+  });
+
   testWidgets('Beranda tampil saat aplikasi dibuka', (tester) async {
     await tester.pumpWidget(const BagiPorsiApp());
     await tester.pumpAndSettle();
 
     expect(find.byType(ListingMakanan), findsOneWidget);
-    expect(find.text('Halo, Pejuang Pangan!'), findsOneWidget);
+    expect(find.text('Porsi baik, harga lebih hemat.'), findsOneWidget);
     expect(find.byType(NavigationDestination), findsNWidgets(4));
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -300));
+    await tester.pumpAndSettle();
     // Widget tests return HTTP 400, exercising the offline image fallback.
     expect(find.byIcon(Icons.broken_image_outlined), findsWidgets);
     expect(tester.takeException(), isNull);
@@ -30,9 +41,9 @@ void main() {
 
     await tester.tap(find.text('Chat'));
     await tester.pumpAndSettle();
-    expect(find.byType(ChatPenjual), findsOneWidget);
-    expect(find.text('Ketik pesan...'), findsOneWidget);
-    expect(find.byIcon(Icons.storefront), findsOneWidget);
+    expect(find.byType(PilihRestoran), findsOneWidget);
+    expect(find.text('Pilih restoran'), findsOneWidget);
+    expect(find.text('Ketik pesan...'), findsNothing);
     expect(tester.takeException(), isNull);
 
     await tester.tap(find.text('Profil'));
