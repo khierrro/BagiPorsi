@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/chat_store.dart';
 import '../data/food_catalog.dart';
 import '../design/bagi_porsi_theme.dart';
+import '../widgets/feature_widgets.dart';
 
 class ChatPenjual extends StatefulWidget {
   const ChatPenjual({super.key, required this.restaurant, required this.store});
@@ -48,15 +49,14 @@ class _ChatPenjualState extends State<ChatPenjual> {
     return Scaffold(
       backgroundColor: BagiPorsiColors.canvas,
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        foregroundColor: BagiPorsiColors.ink,
+        surfaceTintColor: Colors.transparent,
         toolbarHeight: 72,
         titleSpacing: 0,
         title: Row(
           children: [
-            const CircleAvatar(
-              radius: 20,
-              backgroundColor: BagiPorsiColors.mint,
-              child: Icon(Icons.storefront, color: BagiPorsiColors.green),
-            ),
+            FoodPhoto(food: widget.restaurant, size: 40, radius: 14),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -73,41 +73,150 @@ class _ChatPenjualState extends State<ChatPenjual> {
                   ),
                   const Text(
                     'Percakapan dengan toko',
-                    style: TextStyle(fontSize: 12, color: Color(0xFFD7F2E9)),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: BagiPorsiColors.muted,
+                    ),
                   ),
                 ],
               ),
             ),
           ],
         ),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListenableBuilder(
-              listenable: widget.store,
-              builder: (context, child) {
-                final messages = widget.store.messagesFor(
+        actions: [
+          PopupMenuButton<bool>(
+            tooltip: 'Opsi percakapan',
+            icon: const Icon(Icons.more_horiz),
+            onSelected: (completed) {
+              widget.store.setCompleted(
+                widget.restaurant.merchantName,
+                completed,
+              );
+              Navigator.pop(context);
+            },
+            itemBuilder: (_) => [
+              PopupMenuItem(
+                value: !widget.store.isCompleted(
                   widget.restaurant.merchantName,
-                );
-                if (messages.isEmpty) return _buildEmptyConversation();
-                return ListView.builder(
-                  reverse: true,
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
-                  padding: const EdgeInsets.fromLTRB(16, 22, 16, 8),
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) =>
-                      _buildChatBubble(messages[messages.length - 1 - index]),
-                );
-              },
-            ),
+                ),
+                child: Text(
+                  widget.store.isCompleted(widget.restaurant.merchantName)
+                      ? 'Aktifkan kembali'
+                      : 'Tandai selesai',
+                ),
+              ),
+            ],
           ),
-          _buildChatInput(),
         ],
+      ),
+      body: LayoutBuilder(
+        builder: (context, constraints) => Column(
+          children: [
+            if (constraints.maxHeight > 380) _buildFoodSummary(),
+            Expanded(
+              child: ListenableBuilder(
+                listenable: widget.store,
+                builder: (context, child) {
+                  final messages = widget.store.messagesFor(
+                    widget.restaurant.merchantName,
+                  );
+                  if (messages.isEmpty) return _buildEmptyConversation();
+                  return ListView.builder(
+                    reverse: true,
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    padding: const EdgeInsets.fromLTRB(16, 22, 16, 8),
+                    itemCount: messages.length,
+                    itemBuilder: (context, index) =>
+                        _buildChatBubble(messages[messages.length - 1 - index]),
+                  );
+                },
+              ),
+            ),
+            if (constraints.maxHeight > 380)
+              ListenableBuilder(
+                listenable: widget.store,
+                builder: (context, child) =>
+                    widget.store
+                        .messagesFor(widget.restaurant.merchantName)
+                        .isEmpty
+                    ? const SizedBox.shrink()
+                    : _buildQuickReplies(),
+              ),
+            _buildChatInput(),
+          ],
+        ),
       ),
     );
   }
+
+  Widget _buildFoodSummary() => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    decoration: const BoxDecoration(
+      color: Colors.white,
+      border: Border(bottom: BorderSide(color: BagiPorsiColors.border)),
+    ),
+    child: InkWell(
+      onTap: () => openFoodDetails(context, widget.restaurant),
+      child: Row(
+        children: [
+          FoodPhoto(food: widget.restaurant, size: 50, radius: 12),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.restaurant.foodName,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: BagiPorsiColors.ink,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  '${widget.restaurant.discountPrice} · Sisa ${widget.restaurant.portionsLeft} porsi',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: BagiPorsiColors.green,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(
+            Icons.chevron_right,
+            size: 18,
+            color: BagiPorsiColors.muted,
+          ),
+        ],
+      ),
+    ),
+  );
+
+  Widget _buildQuickReplies() => SingleChildScrollView(
+    scrollDirection: Axis.horizontal,
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+    child: Row(
+      children: [
+        for (final text in [
+          'Apakah masih tersedia?',
+          'Saya sedang menuju lokasi',
+          'Sudah sampai',
+        ])
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ActionChip(
+              label: Text(text, style: const TextStyle(fontSize: 11)),
+              onPressed: () => _useSuggestion(text),
+            ),
+          ),
+      ],
+    ),
+  );
 
   Widget _buildEmptyConversation() => Center(
     child: SingleChildScrollView(
@@ -169,7 +278,7 @@ class _ChatPenjualState extends State<ChatPenjual> {
         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
         constraints: const BoxConstraints(maxWidth: 282),
         decoration: BoxDecoration(
-          color: BagiPorsiColors.green,
+          color: BagiPorsiColors.mint,
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(18),
             topRight: Radius.circular(18),
@@ -184,7 +293,7 @@ class _ChatPenjualState extends State<ChatPenjual> {
             Text(
               message.text,
               style: const TextStyle(
-                color: Colors.white,
+                color: BagiPorsiColors.ink,
                 fontSize: 14,
                 height: 1.4,
               ),
@@ -192,7 +301,10 @@ class _ChatPenjualState extends State<ChatPenjual> {
             const SizedBox(height: 8),
             Text(
               '${TimeOfDay.fromDateTime(message.createdAt).format(context)} · Belum terkirim',
-              style: const TextStyle(color: Color(0xFFD7F2E9), fontSize: 10),
+              style: const TextStyle(
+                color: BagiPorsiColors.muted,
+                fontSize: 10,
+              ),
             ),
           ],
         ),

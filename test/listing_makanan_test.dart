@@ -11,7 +11,18 @@ List<String> foodNames(WidgetTester tester) => tester
     .toList();
 
 Future<void> showResults(WidgetTester tester) async {
-  await tester.drag(find.byType(CustomScrollView), const Offset(0, -300));
+  final heading = find.text('Selamatkan makanan hari ini');
+  await tester.scrollUntilVisible(
+    heading,
+    150,
+    scrollable: find
+        .descendant(
+          of: find.byType(CustomScrollView),
+          matching: find.byType(Scrollable),
+        )
+        .first,
+  );
+  await tester.ensureVisible(heading);
   await tester.pumpAndSettle();
 }
 
@@ -89,7 +100,7 @@ void main() {
     },
   );
 
-  for (final width in [320.0, 390.0]) {
+  for (final width in [320.0, 390.0, 430.0]) {
     testWidgets('Header tetap dan warna mengikuti scroll pada lebar $width', (
       tester,
     ) async {
@@ -219,7 +230,7 @@ void main() {
     expect(find.text('4 pilihan makanan tersedia'), findsOneWidget);
     await tester.tap(find.text('Tampilkan hasil di Beranda'));
     await tester.pumpAndSettle();
-    expect(foodNames(tester).length, 4);
+    expect(find.text('4 pilihan makanan tersedia'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -259,6 +270,7 @@ void main() {
       await showSearch(tester);
       await tester.tap(find.byTooltip('Hapus pencarian'));
       await tester.pumpAndSettle();
+      await showResults(tester);
       expect(find.text('4 pilihan makanan tersedia'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
@@ -268,6 +280,8 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(const BagiPorsiApp());
+    await tester.ensureVisible(find.text('Bakery'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Bakery'));
     await tester.pumpAndSettle();
     await showResults(tester);
@@ -280,6 +294,8 @@ void main() {
     expect(foodNames(tester), ['Nasi Uduk Komplit']);
 
     await showSearch(tester);
+    await tester.ensureVisible(find.text('Sayur & Buah'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Sayur & Buah'));
     await tester.pumpAndSettle();
     await showResults(tester);
@@ -303,16 +319,17 @@ void main() {
     await tester.tap(find.text('Tampilkan semua makanan'));
     await tester.pumpAndSettle();
     await showSearch(tester);
-    expect(find.text('4 pilihan makanan tersedia'), findsOneWidget);
     expect(
       tester.widget<TextField>(find.byType(TextField)).controller!.text,
       isEmpty,
     );
+    await showResults(tester);
+    expect(find.text('4 pilihan makanan tersedia'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  for (final width in [320.0, 390.0]) {
-    testWidgets('Dua kartu per baris tanpa overflow pada lebar $width', (
+  for (final width in [320.0, 390.0, 430.0]) {
+    testWidgets('Daftar makanan dengan garis pemisah muat pada lebar $width', (
       tester,
     ) async {
       tester.view.physicalSize = Size(width, 900);
@@ -322,29 +339,41 @@ void main() {
 
       await tester.pumpWidget(const BagiPorsiApp());
       await tester.pumpAndSettle();
-      final categoryY = tester
-          .getCenter(find.byIcon(Icons.restaurant_rounded))
-          .dy;
-      for (final icon in [
-        Icons.verified_outlined,
-        Icons.bakery_dining,
-        Icons.eco_outlined,
-      ]) {
-        expect(tester.getCenter(find.byIcon(icon)).dy, categoryY);
+      final categoryY = tester.getTopLeft(find.text('Semua')).dy;
+      for (final category in ['Ayam', 'Nasi', 'Sarapan', 'Bakso & Soto']) {
+        expect(tester.getTopLeft(find.text(category)).dy, categoryY);
       }
+      expect(tester.getTopLeft(find.text('Bakery')).dy, categoryY);
+      final categories = find.byKey(const ValueKey('food-category-scroll'));
+      await tester.ensureVisible(categories);
+      await tester.pumpAndSettle();
+      final initialMinumanX = tester.getCenter(find.text('Minuman')).dx;
+      await tester.drag(categories, const Offset(-650, 0));
+      await tester.pumpAndSettle();
+      expect(
+        tester.getCenter(find.text('Minuman')).dx,
+        lessThan(initialMinumanX),
+      );
+      await tester.tap(find.text('Minuman'));
+      await tester.pumpAndSettle();
+      expect(find.text('0 pilihan makanan tersedia'), findsOneWidget);
+      await tester.ensureVisible(find.text('Semua'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Semua'));
+      await tester.pumpAndSettle();
       await showResults(tester);
       final cards = find.byType(FoodCard);
       final first = tester.getRect(cards.at(0));
       final second = tester.getRect(cards.at(1));
-      expect(first.top, second.top);
-      expect(second.left, greaterThan(first.right));
+      expect(second.top, greaterThanOrEqualTo(first.bottom));
+      expect(second.left, first.left);
       await tester.drag(find.byType(CustomScrollView), const Offset(0, -500));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
     });
   }
 
-  testWidgets('Kartu tetap muat saat ukuran teks diperbesar', (tester) async {
+  testWidgets('Daftar tetap muat saat ukuran teks diperbesar', (tester) async {
     tester.view.physicalSize = const Size(320, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);

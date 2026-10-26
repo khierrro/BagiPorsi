@@ -9,7 +9,7 @@ const foodCatalog = [
     'Gratis',
     'photo-1509440159596-0249088772ff',
     true,
-    ['Bakery'],
+    ['Bakery', 'Sarapan'],
   ),
   FoodListing(
     'Warung Nasi Uduk',
@@ -20,7 +20,7 @@ const foodCatalog = [
     'Rp 10.000',
     'photo-1604908176997-125f25cc6f3d',
     false,
-    ['Halal'],
+    ['Halal', 'Nasi', 'Sarapan', 'Nusantara'],
   ),
   FoodListing(
     'Kebun Segar',

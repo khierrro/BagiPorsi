@@ -24,8 +24,17 @@ void main() {
       await tester.pumpWidget(const BagiPorsiApp());
       await tester.enterText(find.byType(TextField), selection.name);
       await tester.pumpAndSettle();
-      final takeButton = find.widgetWithText(FilledButton, 'Ambil');
-      await tester.ensureVisible(takeButton);
+      final takeButton = find.widgetWithText(TextButton, 'Ambil');
+      await tester.scrollUntilVisible(
+        takeButton,
+        180,
+        scrollable: find
+            .descendant(
+              of: find.byType(CustomScrollView),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
       await tester.pumpAndSettle();
       final scrollOffset = tester
           .widget<CustomScrollView>(find.byType(CustomScrollView))

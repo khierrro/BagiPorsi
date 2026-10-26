@@ -12,6 +12,18 @@ class ChatMessage {
 class ChatStore extends ChangeNotifier {
   final _messages = <String, List<ChatMessage>>{};
   final _drafts = <String, String>{};
+  final _completed = <String>{};
+
+  bool isCompleted(String merchantName) => _completed.contains(merchantName);
+
+  void setCompleted(String merchantName, bool completed) {
+    if (completed) {
+      _completed.add(merchantName);
+    } else {
+      _completed.remove(merchantName);
+    }
+    notifyListeners();
+  }
 
   List<ChatMessage> messagesFor(String merchantName) =>
       List.unmodifiable(_messages[merchantName] ?? const <ChatMessage>[]);
@@ -31,6 +43,7 @@ class ChatStore extends ChangeNotifier {
   void queueMessage(String merchantName, String text) {
     final trimmed = text.trim();
     if (trimmed.isEmpty) return;
+    _completed.remove(merchantName);
     _messages.putIfAbsent(merchantName, () => []).add(ChatMessage(trimmed));
     _drafts.remove(merchantName);
     notifyListeners();
