@@ -315,7 +315,7 @@ class _PilihRestoranState extends State<PilihRestoran> {
         ? 'Selesai'
         : messages.isNotEmpty
         ? 'Pesan tersimpan'
-        : 'Tanya ketersediaan';
+        : null;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -427,26 +427,29 @@ class _PilihRestoranState extends State<PilihRestoran> {
                         runSpacing: 5,
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: BagiPorsiColors.mint,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              statusLabel,
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: BagiPorsiColors.green,
+                          if (statusLabel != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: BagiPorsiColors.mint,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                statusLabel,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: BagiPorsiColors.green,
+                                ),
                               ),
                             ),
-                          ),
                           Text(
-                            '· ${restaurant.distance} · ${restaurant.discountPrice}',
+                            statusLabel != null
+                                ? '· ${restaurant.distance} · ${restaurant.discountPrice}'
+                                : '${restaurant.distance} · ${restaurant.discountPrice}',
                             style: const TextStyle(
                               fontSize: 11,
                               color: BagiPorsiColors.muted,

@@ -100,43 +100,68 @@ class _HomeQuickActionsState extends State<HomeQuickActions> {
         (MediaQuery.textScalerOf(context).scale(14) - 14).clamp(0.0, 28.0) * 3;
     return ListenableBuilder(
       listenable: _profile,
-      builder: (context, child) => SizedBox(
-        height: 90 + extraHeight,
-        child: ListView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          children: [
-            _QuickAction(
-              title: 'Poin kamu',
-              value: '0 poin',
-              detail: 'Lihat poin terkumpul',
-              icon: Icons.stars_rounded,
-              width: 156,
-              onTap: _showPoints,
-            ),
-            const SizedBox(width: 12),
-            _QuickAction(
-              title: 'Pembelian terakhir',
-              value: latest?.food.foodName ?? 'Belum ada pembelian',
-              detail: 'Lihat riwayatmu',
-              icon: Icons.receipt_long_outlined,
-              width: 208,
-              onTap: widget.onOpenHistory,
-            ),
-            const SizedBox(width: 12),
-            _QuickAction(
-              title: 'Lokasi kamu',
-              value: _profile.location ?? 'Atur lokasi',
-              detail: _profile.location == null
-                  ? 'Pilih area di sekitarmu'
-                  : 'Ubah lokasi',
-              icon: Icons.location_on_outlined,
-              width: 208,
-              onTap: _chooseLocation,
-            ),
-          ],
-        ),
-      ),
+      builder: (context, child) {
+        final actions = [
+          _QuickAction(
+            title: 'Poin kamu',
+            value: '0 poin',
+            detail: 'Lihat poin terkumpul',
+            icon: Icons.stars_rounded,
+            width: 156,
+            onTap: _showPoints,
+          ),
+          _QuickAction(
+            title: 'Pembelian terakhir',
+            value: latest?.food.foodName ?? 'Belum ada pembelian',
+            detail: 'Lihat riwayatmu',
+            icon: Icons.receipt_long_outlined,
+            width: 208,
+            onTap: widget.onOpenHistory,
+          ),
+          _QuickAction(
+            title: 'Lokasi kamu',
+            value: _profile.location ?? 'Atur lokasi',
+            detail: _profile.location == null
+                ? 'Pilih area di sekitarmu'
+                : 'Ubah lokasi',
+            icon: Icons.location_on_outlined,
+            width: 208,
+            onTap: _chooseLocation,
+          ),
+        ];
+        return SizedBox(
+          height: 90 + extraHeight,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth < 400) {
+                return PageView.builder(
+                  controller: PageController(viewportFraction: 0.72),
+                  padEnds: false,
+                  itemCount: actions.length,
+                  itemBuilder: (context, index) => Padding(
+                    padding: EdgeInsets.only(
+                      left: index == 0 ? 16 : 6,
+                      right: index == actions.length - 1 ? 16 : 6,
+                    ),
+                    child: actions[index],
+                  ),
+                );
+              }
+              return ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                children: [
+                  actions[0],
+                  const SizedBox(width: 12),
+                  actions[1],
+                  const SizedBox(width: 12),
+                  actions[2],
+                ],
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }

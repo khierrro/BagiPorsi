@@ -124,22 +124,69 @@ class _ProfilState extends State<Profil> {
     title: 'Dampak baikmu',
     icon: Icons.eco_outlined,
     message: 'Setiap porsi berarti. Porsi pertamamu akan menjadi awal dampak baik di sini.',
-    content: const Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    content: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(
-          child: _ImpactStat(
-            value: '0',
-            label: 'Porsi diselamatkan',
-            icon: Icons.restaurant_rounded,
-          ),
+        const Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _ImpactStat(
+                value: '0',
+                label: 'Porsi diselamatkan',
+                icon: Icons.restaurant_rounded,
+              ),
+            ),
+            SizedBox(width: 20),
+            Expanded(
+              child: _ImpactStat(
+                value: 'Rp0',
+                label: 'Total penghematan',
+                icon: Icons.savings_outlined,
+              ),
+            ),
+          ],
         ),
-        SizedBox(width: 20),
-        Expanded(
-          child: _ImpactStat(
-            value: 'Rp0',
-            label: 'Total penghematan',
-            icon: Icons.savings_outlined,
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 76,
+          child: CarouselView(
+            itemExtent: 230,
+            shrinkExtent: 190,
+            backgroundColor: BagiPorsiColors.mint,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+            children: const [
+              Padding(
+                padding: EdgeInsets.all(12),
+                child: Center(
+                  child: Text(
+                    'SDG 2 · Zero Hunger: kurangi makanan layak konsumsi yang terbuang.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      height: 1.35,
+                      color: BagiPorsiColors.ink,
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.all(12),
+                child: Center(
+                  child: Text(
+                    'Ambil tepat waktu sesuai jadwal yang disepakati dengan toko.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      height: 1.35,
+                      color: BagiPorsiColors.ink,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ],

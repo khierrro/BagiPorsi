@@ -427,6 +427,99 @@ class _ListingMakananState extends State<ListingMakanan> {
     );
   }
 
+  void _showCategoryGrid() {
+    showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: Colors.white,
+      builder: (sheetContext) => SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Semua kategori makanan',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: _ink,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Flexible(
+                child: GridView.builder(
+                  shrinkWrap: true,
+                  itemCount: _categories.length,
+                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: 92,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 8,
+                    mainAxisExtent: 98,
+                  ),
+                  itemBuilder: (context, index) {
+                    final category = _categories[index];
+                    final selected = _selectedCategory == category;
+                    return InkWell(
+                      borderRadius: BorderRadius.circular(14),
+                      onTap: () {
+                        setState(() => _selectedCategory = category);
+                        Navigator.pop(sheetContext);
+                      },
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 54,
+                            height: 54,
+                            padding: const EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                              color: selected
+                                  ? BagiPorsiColors.mint
+                                  : Colors.white,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: selected
+                                    ? _green
+                                    : BagiPorsiColors.border,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: ClipOval(
+                              child: _CategoryFoodImage(index: index),
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            category,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 11,
+                              height: 1.2,
+                              color: selected ? _green : _ink,
+                              fontWeight: selected
+                                  ? FontWeight.w800
+                                  : FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildCategories() {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -460,6 +553,17 @@ class _ListingMakananState extends State<ListingMakanan> {
                   shape: const StadiumBorder(),
                   labelStyle: const TextStyle(fontSize: 11, color: _green),
                   visualDensity: VisualDensity.compact,
+                ),
+                const SizedBox(width: 4),
+                IconButton(
+                  tooltip: 'Semua kategori',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: _showCategoryGrid,
+                  icon: const Icon(
+                    Icons.grid_view_rounded,
+                    size: 19,
+                    color: _green,
+                  ),
                 ),
               ],
             ),
@@ -998,11 +1102,21 @@ class FoodCard extends StatelessWidget {
                                         ),
                                       ],
                                     ),
-                                    Text(
-                                      'Sisa $remaining porsi',
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        color: Color(0xFF9B5B18),
+                                    RichText(
+                                      text: TextSpan(
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: Color(0xFF9B5B18),
+                                        ),
+                                        children: [
+                                          const TextSpan(text: 'Sisa '),
+                                          TextSpan(
+                                            text: '$remaining porsi',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
