@@ -43,7 +43,7 @@ void main() {
     await tester.tap(find.text('Chat'));
     await tester.pumpAndSettle();
     expect(find.byType(PilihRestoran), findsOneWidget);
-    expect(find.text('Pesan'), findsNothing);
+    expect(find.text('Pesan'), findsOneWidget);
     expect(find.text('Pilih restoran'), findsOneWidget);
     expect(find.text('Ketik pesan...'), findsNothing);
     expect(tester.takeException(), isNull);

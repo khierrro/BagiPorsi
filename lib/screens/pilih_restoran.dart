@@ -33,6 +33,34 @@ class _PilihRestoranState extends State<PilihRestoran> {
     message: 'Tanyakan stok, alamat, dan jadwal pengambilan kepada toko. Pesan saat ini tersimpan di sesi perangkat ini dan belum dikirim ke toko.',
   );
 
+  Widget _searchHeader(String query) => Padding(
+    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+    child: TextField(
+      controller: _searchController,
+      onChanged: (_) => setState(() {}),
+      textInputAction: TextInputAction.search,
+      decoration: InputDecoration(
+        hintText: 'Cari restoran atau makanan...',
+        hintStyle: const TextStyle(fontSize: 13),
+        prefixIcon: const Icon(Icons.search, color: BagiPorsiColors.green),
+        suffixIcon: query.isEmpty
+            ? IconButton(
+                tooltip: 'Tentang percakapan',
+                onPressed: _showConversationInfo,
+                icon: const Icon(Icons.info_outline_rounded),
+              )
+            : IconButton(
+                tooltip: 'Hapus pencarian restoran',
+                icon: const Icon(Icons.close),
+                onPressed: () => setState(_searchController.clear),
+              ),
+        border: const UnderlineInputBorder(
+          borderSide: BorderSide(color: BagiPorsiColors.border),
+        ),
+      ),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: widget.store,
@@ -64,165 +92,116 @@ class _PilihRestoranState extends State<PilihRestoran> {
         backgroundColor: Colors.white,
         body: SafeArea(
           bottom: false,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          child: Column(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: const BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: BagiPorsiColors.border),
-                  ),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    CircleAvatar(
-                      radius: 24,
-                      backgroundColor: Colors.white,
-                      child: IconButton(
-                        tooltip: 'Tentang percakapan',
-                        onPressed: _showConversationInfo,
-                        icon: const Icon(
-                          Icons.forum_outlined,
-                          color: BagiPorsiColors.green,
-                        ),
+              Semantics(
+                header: true,
+                child: const Padding(
+                  padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Pesan',
+                      style: TextStyle(
+                        fontSize: 32,
+                        height: 1.15,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.6,
+                        color: Color(0xFF1C1C1C),
                       ),
                     ),
-                    const SizedBox(width: 14),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                  ),
+                ),
+              ),
+              _searchHeader(query),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  children: [
+                    Container(
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: BagiPorsiColors.border),
+                        ),
+                      ),
+                      child: Row(
                         children: [
-                          Text(
-                            'Obrolan kecil, dampak baik.',
-                            style: TextStyle(
-                              fontSize: 16,
-                              height: 1.3,
-                              fontWeight: FontWeight.w800,
-                              color: BagiPorsiColors.ink,
-                            ),
-                          ),
-                          SizedBox(height: 5),
-                          Text(
-                            'Pastikan porsi dan atur pengambilan dengan toko.',
-                            style: TextStyle(
-                              fontSize: 12,
-                              height: 1.5,
-                              color: BagiPorsiColors.muted,
-                            ),
-                          ),
+                          Expanded(child: _tab('Aktif', false)),
+                          Expanded(child: _tab('Selesai', true)),
                         ],
                       ),
                     ),
+                    const SizedBox(height: 22),
+                    Text(
+                      _completed ? 'Percakapan selesai' : 'Pilih restoran',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: BagiPorsiColors.ink,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${restaurants.length} restoran tersedia',
+                      style: const TextStyle(
+                        color: BagiPorsiColors.muted,
+                        fontSize: 11,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    if (restaurants.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 32,
+                          horizontal: 12,
+                        ),
+                        child: Column(
+                          children: [
+                            CircleAvatar(
+                              radius: 35,
+                              backgroundColor: BagiPorsiColors.mint,
+                              child: Icon(
+                                _completed
+                                    ? Icons.task_alt_rounded
+                                    : Icons.search_off_rounded,
+                                color: BagiPorsiColors.green,
+                                size: 32,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              _completed && query.isEmpty
+                                  ? 'Belum ada percakapan selesai'
+                                  : 'Restoran belum ditemukan',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: BagiPorsiColors.ink,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _completed && query.isEmpty
+                                  ? 'Percakapan yang kamu tandai selesai akan muncul di sini.'
+                                  : 'Coba nama restoran atau makanan lainnya.',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                height: 1.5,
+                                color: BagiPorsiColors.muted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    for (final restaurant in restaurants)
+                      _buildRestaurant(restaurant),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: _searchController,
-                onChanged: (_) => setState(() {}),
-                textInputAction: TextInputAction.search,
-                decoration: InputDecoration(
-                  hintText: 'Cari restoran atau makanan...',
-                  hintStyle: const TextStyle(fontSize: 13),
-                  prefixIcon: const Icon(
-                    Icons.search,
-                    color: BagiPorsiColors.green,
-                  ),
-                  suffixIcon: query.isEmpty
-                      ? null
-                      : IconButton(
-                          tooltip: 'Hapus pencarian restoran',
-                          icon: const Icon(Icons.close),
-                          onPressed: () => setState(_searchController.clear),
-                        ),
-                  border: const UnderlineInputBorder(
-                    borderSide: BorderSide(color: BagiPorsiColors.border),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                decoration: const BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: BagiPorsiColors.border),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(child: _tab('Aktif', false)),
-                    Expanded(child: _tab('Selesai', true)),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 22),
-              Text(
-                _completed ? 'Percakapan selesai' : 'Pilih restoran',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: BagiPorsiColors.ink,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '${restaurants.length} restoran tersedia',
-                style: const TextStyle(
-                  color: BagiPorsiColors.muted,
-                  fontSize: 11,
-                ),
-              ),
-              const SizedBox(height: 14),
-              if (restaurants.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 32,
-                    horizontal: 12,
-                  ),
-                  child: Column(
-                    children: [
-                      CircleAvatar(
-                        radius: 35,
-                        backgroundColor: BagiPorsiColors.mint,
-                        child: Icon(
-                          _completed
-                              ? Icons.task_alt_rounded
-                              : Icons.search_off_rounded,
-                          color: BagiPorsiColors.green,
-                          size: 32,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _completed && query.isEmpty
-                            ? 'Belum ada percakapan selesai'
-                            : 'Restoran belum ditemukan',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: BagiPorsiColors.ink,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _completed && query.isEmpty
-                            ? 'Percakapan yang kamu tandai selesai akan muncul di sini.'
-                            : 'Coba nama restoran atau makanan lainnya.',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          height: 1.5,
-                          color: BagiPorsiColors.muted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              for (final restaurant in restaurants)
-                _buildRestaurant(restaurant),
             ],
           ),
         ),
