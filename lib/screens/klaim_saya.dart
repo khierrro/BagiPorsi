@@ -149,6 +149,47 @@ class _KlaimSayaState extends State<KlaimSaya> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _collect(FoodClaim claim, {BuildContext? sheetContext}) async {
+    final yes = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Selesaikan pengambilan?'),
+        content: Text(
+          'Konfirmasi bahwa ${claim.quantity} porsi ${claim.food.foodName} sudah kamu ambil di ${claim.food.merchantName}. Kamu akan mendapatkan +${claim.pointsEarned} poin kebaikan.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Kembali'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Ya, sudah diambil'),
+          ),
+        ],
+      ),
+    );
+    if (yes == true && mounted) {
+      await _run(() => _store!.collect(claim.code));
+      if (!mounted) return;
+      final collected = _store!.history.any(
+        (c) => c.code == claim.code && c.status == ClaimStatus.collected,
+      );
+      if (collected) {
+        if (sheetContext != null && sheetContext.mounted) {
+          Navigator.pop(sheetContext);
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Pengambilan selesai! +${claim.pointsEarned} poin kebaikan ditambahkan.',
+            ),
+          ),
+        );
+      }
+    }
+  }
+
   void _showCode(FoodClaim claim) {
     showModalBottomSheet<void>(
       context: context,
@@ -239,38 +280,7 @@ class _KlaimSayaState extends State<KlaimSaya> with WidgetsBindingObserver {
                     FilledButton(
                       onPressed: _store!.busy
                           ? null
-                          : () async {
-                              final yes = await showDialog<bool>(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: const Text('Simulasikan pengambilan?'),
-                                  content: const Text(
-                                    'Klaim demo akan dipindahkan ke Riwayat dengan status Sudah diambil. Ini bukan konfirmasi dari penjual.',
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.pop(context, false),
-                                      child: const Text('Kembali'),
-                                    ),
-                                    FilledButton(
-                                      onPressed: () =>
-                                          Navigator.pop(context, true),
-                                      child: const Text('Ya, sudah diambil'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                              if (yes == true && mounted) {
-                                await _run(() => _store!.collect(claim.code));
-                                if (sheetContext.mounted &&
-                                    _store!.history.any(
-                                      (c) => c.code == claim.code,
-                                    )) {
-                                  Navigator.pop(sheetContext);
-                                }
-                              }
-                            },
+                          : () => _collect(claim, sheetContext: sheetContext),
                       child: const Text('Simulasikan pengambilan'),
                     ),
                 ],
@@ -561,13 +571,39 @@ class _KlaimSayaState extends State<KlaimSaya> with WidgetsBindingObserver {
                     ? BagiPorsiColors.green
                     : BagiPorsiColors.muted,
               ),
-              Text(
-                '${claim.quantity} porsi',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: BagiPorsiColors.ink,
-                ),
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(
+                    '${claim.quantity} porsi',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: BagiPorsiColors.ink,
+                    ),
+                  ),
+                  if (active || status == ClaimStatus.collected)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: BagiPorsiColors.mint,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        '+${claim.pointsEarned} poin',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: BagiPorsiColors.green,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ],
           ),
@@ -694,7 +730,36 @@ class _KlaimSayaState extends State<KlaimSaya> with WidgetsBindingObserver {
             ],
           ),
           if (active) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
+            FilledButton(
+              onPressed: _store!.busy ? null : () => _collect(claim),
+              style: FilledButton.styleFrom(
+                backgroundColor: BagiPorsiColors.green,
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(46),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.check_circle_outline_rounded, size: 19),
+                  SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      'Selesaikan pengambilan',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
             LayoutBuilder(
               builder: (context, constraints) {
                 final contact = OutlinedButton.icon(
@@ -712,11 +777,13 @@ class _KlaimSayaState extends State<KlaimSaya> with WidgetsBindingObserver {
                     ),
                   ),
                 );
-                final directions = FilledButton.icon(
+                final directions = OutlinedButton.icon(
                   onPressed: () => _directions(claim),
                   icon: const Icon(Icons.navigation_rounded, size: 17),
                   label: const Text('Petunjuk ambil'),
-                  style: FilledButton.styleFrom(
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: BagiPorsiColors.border),
+                    foregroundColor: BagiPorsiColors.ink,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,
                       vertical: 12,

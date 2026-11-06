@@ -18,6 +18,7 @@ class AppSearchBar extends StatelessWidget {
     this.onClear,
     this.emptyTrailing,
     this.onWhiteBackground = false,
+    this.fillColor,
     this.textInputAction = TextInputAction.search,
   });
 
@@ -37,6 +38,7 @@ class AppSearchBar extends StatelessWidget {
 
   /// Tambahkan outline dan bayangan untuk latar putih.
   final bool onWhiteBackground;
+  final Color? fillColor;
   final TextInputAction textInputAction;
 
   static const _radius = 18.0;
@@ -75,8 +77,10 @@ class AppSearchBar extends StatelessWidget {
                   },
                 ),
           filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(vertical: 16),
+          fillColor:
+              fillColor ??
+              (onWhiteBackground ? const Color(0xFFF3F5F4) : Colors.white),
+          contentPadding: const EdgeInsets.symmetric(vertical: 15),
           border: border,
           enabledBorder: border,
           focusedBorder: border.copyWith(

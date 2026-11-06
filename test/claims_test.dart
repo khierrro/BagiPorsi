@@ -70,6 +70,25 @@ void main() {
         2,
       );
       expect(find.text(store.active.single.code), findsOneWidget);
+
+      await tester.scrollUntilVisible(
+        find.text('Selesaikan pengambilan').hitTestable(),
+        150,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Selesaikan pengambilan'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ya, sudah diambil'));
+      await tester.pumpAndSettle();
+      expect(store.active, isEmpty);
+      expect(store.collected.length, 1);
+      expect(store.points, 10);
+      expect(store.rescuedPortions, 1);
+
+      await tester.tap(find.text('Profil'));
+      await tester.pumpAndSettle();
+      expect(find.text('10 poin terkumpul'), findsOneWidget);
+      expect(find.text('1 porsi diselamatkan'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox.shrink());
     },

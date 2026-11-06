@@ -14,8 +14,19 @@ abstract final class BagiPorsiColors {
 }
 
 abstract final class BagiPorsiTheme {
+  static const fontFamily = 'Plus Jakarta Sans';
+  static const fontFallback = <String>[
+    'Inter',
+    'Segoe UI',
+    'SF Pro Display',
+    'Roboto',
+    'sans-serif',
+  ];
+
   static ThemeData get data => ThemeData(
     useMaterial3: true,
+    fontFamily: fontFamily,
+    fontFamilyFallback: fontFallback,
     colorScheme: ColorScheme.fromSeed(
       seedColor: BagiPorsiColors.green,
       surface: Colors.white,
@@ -23,18 +34,55 @@ abstract final class BagiPorsiTheme {
     scaffoldBackgroundColor: Colors.white,
     textTheme: const TextTheme(
       headlineSmall: TextStyle(
+        fontFamily: fontFamily,
+        fontFamilyFallback: fontFallback,
         fontSize: 22,
         fontWeight: FontWeight.w800,
+        letterSpacing: -0.4,
+        height: 1.25,
+        color: BagiPorsiColors.ink,
+      ),
+      titleLarge: TextStyle(
+        fontFamily: fontFamily,
+        fontFamilyFallback: fontFallback,
+        fontSize: 19,
+        fontWeight: FontWeight.w800,
+        letterSpacing: -0.3,
+        height: 1.25,
         color: BagiPorsiColors.ink,
       ),
       titleMedium: TextStyle(
+        fontFamily: fontFamily,
+        fontFamilyFallback: fontFallback,
         fontSize: 16,
         fontWeight: FontWeight.w700,
+        letterSpacing: -0.2,
+        height: 1.3,
         color: BagiPorsiColors.ink,
       ),
-      bodyMedium: TextStyle(fontSize: 14, color: BagiPorsiColors.ink),
-      bodySmall: TextStyle(fontSize: 12, color: BagiPorsiColors.muted),
-      labelSmall: TextStyle(fontSize: 11, color: BagiPorsiColors.muted),
+      bodyMedium: TextStyle(
+        fontFamily: fontFamily,
+        fontFamilyFallback: fontFallback,
+        fontSize: 14,
+        letterSpacing: -0.1,
+        height: 1.4,
+        color: BagiPorsiColors.ink,
+      ),
+      bodySmall: TextStyle(
+        fontFamily: fontFamily,
+        fontFamilyFallback: fontFallback,
+        fontSize: 12,
+        letterSpacing: -0.05,
+        height: 1.35,
+        color: BagiPorsiColors.muted,
+      ),
+      labelSmall: TextStyle(
+        fontFamily: fontFamily,
+        fontFamilyFallback: fontFallback,
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        color: BagiPorsiColors.muted,
+      ),
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(

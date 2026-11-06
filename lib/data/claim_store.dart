@@ -22,6 +22,8 @@ class FoodClaim {
     this.status = ClaimStatus.active,
   });
 
+  static const int pointsPerPortion = 10;
+
   final String code;
   final FoodListing food;
   final int quantity, unitPrice;
@@ -31,6 +33,11 @@ class FoodClaim {
   String get totalLabel => food.isFree ? 'Gratis' : rupiah(total);
   String get paymentLabel =>
       food.isFree ? 'Tanpa pembayaran' : 'Tunai saat pengambilan';
+  int get pointsEarned => quantity * pointsPerPortion;
+  int get originalUnitPrice =>
+      int.tryParse(food.originalPrice.replaceAll(RegExp(r'[^0-9]'), '')) ??
+      unitPrice;
+  int get savedAmount => max(0, originalUnitPrice - unitPrice) * quantity;
 
   FoodClaim withStatus(ClaimStatus value) => FoodClaim(
     code: code,
@@ -126,10 +133,22 @@ class ClaimStore extends ChangeNotifier {
   List<FoodClaim> get claims => List.unmodifiable(_claims);
   List<FoodClaim> get active =>
       claims.where((c) => statusOf(c) == ClaimStatus.active).toList();
+  List<FoodClaim> get collected =>
+      claims.where((c) => statusOf(c) == ClaimStatus.collected).toList();
   List<FoodClaim> get history =>
       claims.where((c) => statusOf(c) != ClaimStatus.active).toList();
   FoodClaim? get latest => _claims.isEmpty ? null : _claims.first;
   int get activePortions => active.fold(0, (sum, c) => sum + c.quantity);
+  int get rescuedPortions => collected.fold(0, (sum, c) => sum + c.quantity);
+  int get points => collected.fold(0, (sum, c) => sum + c.pointsEarned);
+  int get totalSavings => collected.fold(0, (sum, c) => sum + c.savedAmount);
+  String get totalSavingsLabel =>
+      totalSavings == 0 ? 'Rp0' : rupiah(totalSavings);
+  String get levelTitle {
+    if (points >= 100) return 'Pahlawan Zero Hunger';
+    if (points >= 30) return 'Penyelamat Porsi';
+    return 'Pemula Pangan';
+  }
 
   ClaimStatus statusOf(FoodClaim claim) =>
       claim.status == ClaimStatus.active && !_now().isBefore(claim.expiresAt)

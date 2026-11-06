@@ -5,9 +5,11 @@ import 'package:zerohunger/data/user_profile_store.dart';
 import 'package:zerohunger/design/bagi_porsi_theme.dart';
 import 'package:zerohunger/screens/chat_penjual.dart';
 import 'package:zerohunger/screens/detail_makanan.dart';
+import 'package:zerohunger/screens/listing_makanan.dart';
 import 'package:zerohunger/screens/peta.dart';
 import 'package:zerohunger/screens/pilih_restoran.dart';
 import 'package:zerohunger/screens/profil.dart';
+import 'package:zerohunger/screens/restoran_favorit.dart';
 
 Widget app(Widget page, {double textScale = 1}) => MaterialApp(
   theme: BagiPorsiTheme.data,
@@ -63,10 +65,29 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Edit profil'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextFormField), 'Rani');
+    expect(find.text('Ubah profil'), findsOneWidget);
+    await tester.tap(find.text('Ubah profil'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('profile-name-field')),
+      'Rani',
+    );
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('profile-gender-field')),
+    );
+    await tester.tap(find.byKey(const ValueKey('profile-gender-field')));
+    await tester.pumpAndSettle();
+    expect(find.text('Apa jenis kelaminmu?'), findsOneWidget);
+    await tester.tap(find.text('Perempuan'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Simpan perubahan'));
     await tester.tap(find.text('Simpan perubahan'));
     await tester.pumpAndSettle();
     expect(profile.name, 'Rani');
+    expect(profile.gender, 'Perempuan');
+    expect(find.text('Rani'), findsOneWidget);
+    await tester.tap(find.byTooltip('Kembali'));
+    await tester.pumpAndSettle();
     expect(find.text('Rani'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.text('Lokasi tersimpan').hitTestable(),
@@ -75,20 +96,56 @@ void main() {
     );
     await tester.tap(find.text('Lokasi tersimpan'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextFormField), 'Coblong, Bandung');
+    expect(find.text('Tempat Tersimpan'), findsOneWidget);
+    await tester.tap(find.text('Tambahkan rumah'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('place-address-field')),
+      'Perumahan Sentosa Park, Abadi Cluster',
+    );
     await tester.tap(find.text('Simpan lokasi'));
     await tester.pumpAndSettle();
+    expect(profile.location, 'Perumahan Sentosa Park, Abadi Cluster');
+    expect(find.text('Rumah'), findsOneWidget);
+
+    await tester.tap(find.text('Tambah baru'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Kampus'));
+    await tester.enterText(
+      find.byKey(const ValueKey('place-address-field')),
+      'Coblong, Bandung',
+    );
+    await tester.tap(find.text('Simpan lokasi'));
+    await tester.pumpAndSettle();
+    expect(profile.savedLocations.length, 2);
     expect(profile.location, 'Coblong, Bandung');
+
+    await tester.tap(find.byTooltip('Tutup'));
+    await tester.pumpAndSettle();
+    expect(find.text('Notifikasi'), findsNothing);
+
     await tester.scrollUntilVisible(
-      find.text('Notifikasi').hitTestable(),
+      find.text('Poin kamu').hitTestable(),
       100,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(find.text('Notifikasi'));
+    await tester.tap(find.text('Poin kamu'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byType(SwitchListTile));
+    expect(find.text('Poin Kamu'), findsOneWidget);
+    expect(find.text('Tingkatan Level Kebaikan'), findsOneWidget);
+    await tester.pageBack();
     await tester.pumpAndSettle();
-    expect(profile.notificationsEnabled, isFalse);
+
+    await tester.scrollUntilVisible(
+      find.text('Pusat bantuan').hitTestable(),
+      100,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Pusat bantuan'));
+    await tester.pumpAndSettle();
+    expect(find.text('Pusat Bantuan'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   });
 
@@ -124,6 +181,34 @@ void main() {
     await tester.tap(find.text('Aktifkan kembali'));
     await tester.pumpAndSettle();
     expect(store.isCompleted('Toko Roti Prima'), isFalse);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Kartu yang difavoritkan muncul di halaman Restoran Favorit', (
+    tester,
+  ) async {
+    final profile = UserProfileStore();
+    addTearDown(profile.dispose);
+    await tester.pumpWidget(app(ListingMakanan(profile: profile)));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Roti Gandum & Croissant'),
+      180,
+      scrollable: find
+          .descendant(
+            of: find.byType(CustomScrollView),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    await tester.tap(find.byTooltip('Simpan favorit').first);
+    await tester.pumpAndSettle();
+    expect(profile.favorites, isNotEmpty);
+
+    await tester.pumpWidget(app(RestoranFavoritPage(profile: profile)));
+    await tester.pumpAndSettle();
+    expect(find.text('1 tempat tersimpan'), findsOneWidget);
+    expect(find.byType(FoodCard), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

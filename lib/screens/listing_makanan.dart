@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../data/claim_store.dart';
 import '../data/food_catalog.dart';
 import '../data/user_profile_store.dart';
 import '../design/bagi_porsi_theme.dart';
@@ -11,6 +12,7 @@ import '../widgets/app_search_bar.dart';
 import '../widgets/claim_scope.dart';
 import 'detail_makanan.dart';
 import 'klaim_saya.dart';
+import 'restoran_favorit.dart';
 
 const _green = BagiPorsiColors.green;
 const _ink = BagiPorsiColors.ink;
@@ -28,6 +30,7 @@ class _ListingMakananState extends State<ListingMakanan> {
   static const _toolbarHeight = 60.0;
   static const _headerGreen = BagiPorsiColors.deepGreen;
 
+  late final _profile = widget.profile ?? UserProfileStore();
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
   final _greenAreaKey = GlobalKey();
@@ -36,6 +39,8 @@ class _ListingMakananState extends State<ListingMakanan> {
     collapse: 0,
   ));
   String _selectedCategory = 'Semua';
+  String _selectedPreference = 'Semua';
+  String _sortBy = 'Rekomendasi';
 
   double get _searchExtent =>
       76 +
@@ -70,12 +75,8 @@ class _ListingMakananState extends State<ListingMakanan> {
     final greenArea = _greenAreaKey.currentContext?.findRenderObject();
     if (greenArea is! RenderBox || !greenArea.hasSize) return;
 
-    // Fade over the last header-height of green content. Measure the laid-out
-    // content so wrapping, text scaling and screen width move the boundary too.
-    final headerHeight = _toolbarHeight + MediaQuery.paddingOf(context).top;
-    final fadeStart = _searchExtent + greenArea.size.height - headerHeight;
-    final progress = ((_scrollController.offset - fadeStart) / headerHeight)
-        .clamp(0.0, 1.0);
+    final heroHeight = math.max(1.0, greenArea.size.height);
+    final progress = (_scrollController.offset / heroHeight).clamp(0.0, 1.0);
     _headerState.value = (
       blend: Curves.easeInOut.transform(progress),
       collapse: (_scrollController.offset / _searchExtent).clamp(0.0, 1.0),
@@ -88,6 +89,7 @@ class _ListingMakananState extends State<ListingMakanan> {
     _scrollController.dispose();
     _headerState.dispose();
     _searchController.dispose();
+    if (widget.profile == null) _profile.dispose();
     super.dispose();
   }
 
@@ -95,26 +97,9 @@ class _ListingMakananState extends State<ListingMakanan> {
     setState(() {
       _searchController.clear();
       _selectedCategory = 'Semua';
+      _selectedPreference = 'Semua';
+      _sortBy = 'Rekomendasi';
     });
-  }
-
-  Future<void> _openSearch() async {
-    FocusManager.instance.primaryFocus?.unfocus();
-    final result = await showSearch<String?>(
-      context: context,
-      query: _searchController.text,
-      delegate: _FoodSearchDelegate(
-        foods: _foods
-            .where(
-              (food) =>
-                  _selectedCategory == 'Semua' ||
-                  food.categories.contains(_selectedCategory),
-            )
-            .toList(),
-      ),
-    );
-    if (!mounted || result == null) return;
-    setState(() => _searchController.text = result);
   }
 
   void _showActivity({required bool transactions}) {
@@ -122,46 +107,97 @@ class _ListingMakananState extends State<ListingMakanan> {
       openClaims(context, history: true);
       return;
     }
+    final store = ClaimScope.maybeOf(context)?.store;
+    final items = store?.claims ?? const <FoodClaim>[];
     showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
       backgroundColor: Colors.white,
-      builder: (context) => SafeArea(
+      builder: (sheetContext) => SafeArea(
         top: false,
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                transactions ? 'Riwayat transaksi' : 'Notifikasi',
-                style: const TextStyle(
+              const Text(
+                'Notifikasi',
+                style: TextStyle(
                   color: _ink,
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              const SizedBox(height: 28),
-              Icon(
-                transactions
-                    ? Icons.receipt_long_outlined
-                    : Icons.notifications_none_rounded,
-                color: _green,
-                size: 48,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                transactions
-                    ? 'Belum ada riwayat transaksi'
-                    : 'Belum ada notifikasi',
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: _ink, fontSize: 16),
-              ),
-              const SizedBox(height: 24),
+              if (items.isEmpty) ...[
+                const SizedBox(height: 28),
+                const Icon(
+                  Icons.notifications_none_rounded,
+                  color: _green,
+                  size: 48,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Belum ada notifikasi',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: _ink, fontSize: 16),
+                ),
+              ] else ...[
+                const SizedBox(height: 14),
+                for (final claim in items.take(6))
+                  Builder(
+                    builder: (context) {
+                      final status = store!.statusOf(claim);
+                      final isActive = status == ClaimStatus.active;
+                      final isCollected = status == ClaimStatus.collected;
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: CircleAvatar(
+                          backgroundColor: BagiPorsiColors.mint,
+                          child: Icon(
+                            isActive
+                                ? Icons.shopping_bag_outlined
+                                : isCollected
+                                ? Icons.stars_rounded
+                                : Icons.info_outline_rounded,
+                            color: _green,
+                            size: 20,
+                          ),
+                        ),
+                        title: Text(
+                          isActive
+                              ? 'Menunggu diambil · ${claim.food.foodName}'
+                              : isCollected
+                              ? 'Pengambilan selesai · +${claim.pointsEarned} poin'
+                              : 'Klaim dibatalkan · ${claim.food.foodName}',
+                          style: const TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                            color: _ink,
+                          ),
+                        ),
+                        subtitle: Text(
+                          isActive
+                              ? 'Kode ${claim.code} di ${claim.food.merchantName} · Ketuk untuk buka Klaim'
+                              : '${claim.quantity} porsi dari ${claim.food.merchantName}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: BagiPorsiColors.muted,
+                          ),
+                        ),
+                        onTap: () {
+                          Navigator.pop(sheetContext);
+                          openClaims(this.context, history: !isActive);
+                        },
+                      );
+                    },
+                  ),
+              ],
+              const SizedBox(height: 20),
               TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => Navigator.pop(sheetContext),
                 child: const Text('Tutup'),
               ),
             ],
@@ -178,11 +214,25 @@ class _ListingMakananState extends State<ListingMakanan> {
       final matchesCategory =
           _selectedCategory == 'Semua' ||
           food.categories.contains(_selectedCategory);
+      final matchesPreference = switch (_selectedPreference) {
+        'Porsi gratis' => food.isFree,
+        'Harga hemat' => !food.isFree,
+        _ => true,
+      };
       final matchesQuery = '${food.foodName} ${food.merchantName}'
           .toLowerCase()
           .contains(query);
-      return matchesCategory && matchesQuery;
+      return matchesCategory && matchesPreference && matchesQuery;
     }).toList();
+    if (_sortBy == 'Terdekat') {
+      foods.sort(
+        (a, b) =>
+            double.parse(a.distance.split(' ').first)
+                .compareTo(double.parse(b.distance.split(' ').first)),
+      );
+    } else if (_sortBy == 'Stok terbanyak') {
+      foods.sort((a, b) => b.portionsLeft.compareTo(a.portionsLeft));
+    }
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -204,13 +254,6 @@ class _ListingMakananState extends State<ListingMakanan> {
             ),
             SliverToBoxAdapter(child: _buildHeader()),
             const SliverToBoxAdapter(child: SizedBox(height: 16)),
-            SliverToBoxAdapter(
-              child: HomeQuickActions(
-                profile: widget.profile,
-                onOpenHistory: () => _showActivity(transactions: true),
-              ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
@@ -243,21 +286,28 @@ class _ListingMakananState extends State<ListingMakanan> {
             else
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                sliver: SliverList.builder(
-                  itemCount: foods.length,
-                  itemBuilder: (context, index) {
-                    final food = foods[index];
-                    return FoodCard(
-                      merchantName: food.merchantName,
-                      foodName: food.foodName,
-                      distance: food.distance,
-                      portionsLeft: food.portionsLeft,
-                      originalPrice: food.originalPrice,
-                      discountPrice: food.discountPrice,
-                      imageUrl: food.imageUrl,
-                      isFree: food.isFree,
-                    );
-                  },
+                sliver: SliverToBoxAdapter(
+                  child: Column(
+                    children: [
+                      for (final food in foods)
+                        ListenableBuilder(
+                          listenable: _profile,
+                          builder: (context, child) => FoodCard(
+                            merchantName: food.merchantName,
+                            foodName: food.foodName,
+                            distance: food.distance,
+                            portionsLeft: food.portionsLeft,
+                            originalPrice: food.originalPrice,
+                            discountPrice: food.discountPrice,
+                            imageUrl: food.imageUrl,
+                            isFree: food.isFree,
+                            isFavorite: _profile.isFavorite(food.merchantName),
+                            onToggleFavorite: () =>
+                                _profile.toggleFavorite(food.merchantName),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
           ],
@@ -269,9 +319,28 @@ class _ListingMakananState extends State<ListingMakanan> {
   Widget _buildNavbar(String query, ({double blend, double collapse}) state) {
     final background = Color.lerp(_headerGreen, Colors.white, state.blend)!;
     final foreground = Color.lerp(Colors.white, Colors.black, state.blend)!;
+    final subtitleColor = Color.lerp(
+      const Color(0xD9FFFFFF),
+      BagiPorsiColors.muted,
+      state.blend,
+    )!;
+    final actionCircleColor = Color.lerp(
+      const Color(0x24FFFFFF),
+      const Color(0xFFF2F4F5),
+      state.blend,
+    )!;
+    final searchFillColor = Color.lerp(
+      Colors.white,
+      const Color(0xFFF2F4F5),
+      state.blend,
+    )!;
     final darkIcons =
         ThemeData.estimateBrightnessForColor(background) == Brightness.light;
-    final compactSearch = state.collapse >= 0.8;
+    final borderColor = Color.lerp(
+      Colors.transparent,
+      BagiPorsiColors.border,
+      state.blend,
+    )!;
 
     return SliverAppBar(
       pinned: true,
@@ -282,9 +351,11 @@ class _ListingMakananState extends State<ListingMakanan> {
       shadowColor: Colors.transparent,
       elevation: 0,
       scrolledUnderElevation: 0,
+      shape: Border(bottom: BorderSide(color: borderColor)),
       toolbarHeight: _toolbarHeight,
+      collapsedHeight: _toolbarHeight + _searchExtent,
       expandedHeight: _toolbarHeight + _searchExtent,
-      leadingWidth: 56,
+      leadingWidth: 52,
       titleSpacing: 0,
       centerTitle: false,
       systemOverlayStyle: SystemUiOverlayStyle(
@@ -292,61 +363,112 @@ class _ListingMakananState extends State<ListingMakanan> {
         statusBarIconBrightness: darkIcons ? Brightness.dark : Brightness.light,
         statusBarBrightness: darkIcons ? Brightness.light : Brightness.dark,
       ),
-      leading: Padding(
-        padding: const EdgeInsets.only(left: 8),
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 160),
-          child: compactSearch
-              ? IconButton(
-                  key: const ValueKey('compact-search'),
-                  tooltip: 'Buka pencarian',
-                  onPressed: _openSearch,
-                  icon: const Icon(Icons.search_rounded, size: 23),
-                )
-              : const Icon(
-                  Icons.volunteer_activism_outlined,
-                  key: ValueKey('brand-icon'),
-                  size: 25,
-                ),
+      leading: const Padding(
+        padding: EdgeInsets.only(left: 8),
+        child: Icon(
+          Icons.volunteer_activism_outlined,
+          key: ValueKey('brand-icon'),
+          size: 24,
         ),
       ),
-      title: const Text(
-        'Bagi Porsi',
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.w800,
-          letterSpacing: -0.5,
+      title: ListenableBuilder(
+        listenable: _profile,
+        builder: (context, _) => InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: () => chooseUserLocation(context, _profile),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'AMBIL SENDIRI · ${_profile.location ?? "Belum diatur"}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                        color: subtitleColor,
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: 14,
+                      color: subtitleColor,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 1),
+                const Text(
+                  'Bagi Porsi',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
       actions: [
-        IconButton(
-          tooltip: 'Notifikasi',
-          onPressed: () => _showActivity(transactions: false),
-          icon: const Icon(Icons.notifications_none_rounded),
+        if (MediaQuery.sizeOf(context).width >= 360) ...[
+          Center(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: actionCircleColor,
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                tooltip: 'Favorit',
+                visualDensity: VisualDensity.compact,
+                onPressed: () => Navigator.of(context).push<void>(
+                  MaterialPageRoute(
+                    builder: (_) => RestoranFavoritPage(profile: _profile),
+                  ),
+                ),
+                icon: const Icon(Icons.favorite_border_rounded, size: 20),
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+        ],
+        Center(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: actionCircleColor,
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              tooltip: 'Notifikasi',
+              visualDensity: VisualDensity.compact,
+              onPressed: () => _showActivity(transactions: false),
+              icon: const Icon(Icons.notifications_none_rounded, size: 20),
+            ),
+          ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 10),
       ],
       flexibleSpace: ClipRect(
         child: Stack(
           children: [
             Positioned(
-              top: MediaQuery.paddingOf(context).top + _toolbarHeight + 4,
-              left: 18,
-              right: 18,
-              child: ExcludeSemantics(
-                excluding: compactSearch,
-                child: IgnorePointer(
-                  ignoring: compactSearch,
-                  child: Opacity(
-                    opacity: 1 - state.collapse,
-                    child: SizedBox(
-                      height: _searchExtent - 20,
-                      child: _buildNavbarSearch(query),
-                    ),
-                  ),
-                ),
+              top: MediaQuery.paddingOf(context).top + _toolbarHeight + 2,
+              left: 16,
+              right: 16,
+              child: SizedBox(
+                height: _searchExtent - 16,
+                child: _buildNavbarSearch(query, searchFillColor),
               ),
             ),
           ],
@@ -355,13 +477,15 @@ class _ListingMakananState extends State<ListingMakanan> {
     );
   }
 
-  Widget _buildNavbarSearch(String query) => AppSearchBar(
+  Widget _buildNavbarSearch(String query, Color fillColor) => AppSearchBar(
     controller: _searchController,
-    hintText: 'Cari makanan atau toko...',
+    hintText: 'Kamu pesan apa nih?',
     clearTooltip: 'Hapus pencarian',
+    fillColor: fillColor,
     onChanged: (_) => setState(() {}),
     onClear: () => setState(() {}),
   );
+
   Widget _buildHeader() {
     return Stack(
       key: _greenAreaKey,
@@ -379,47 +503,45 @@ class _ListingMakananState extends State<ListingMakanan> {
             ),
           ),
         ),
-        ClipPath(
-          clipper: const _HeaderWaveClipper(),
-          child: ColoredBox(
-            color: _headerGreen,
-            child: Stack(
-              children: [
-                Positioned(
-                  right: 8,
-                  top: -14,
-                  child: IgnorePointer(
-                    child: ExcludeSemantics(
-                      child: Transform.flip(
-                        flipX: true,
-                        child: const Icon(
-                          Icons.volunteer_activism_outlined,
-                          size: 160,
-                          color: Color(0x1FFFFFFF),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(18, 24, 72, 44),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(minHeight: 68),
-                    child: const Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Porsi baik, harga lebih hemat.',
+        SizedBox(
+          width: double.infinity,
+          child: ClipPath(
+            clipper: const _HeaderWaveClipper(),
+            child: ColoredBox(
+              color: _headerGreen,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(18, 12, 18, 40),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 68),
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Selamatkan porsi, jaga bumi kita.',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 22,
+                          fontSize: 20,
                           height: 1.2,
+                          letterSpacing: -0.4,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                    ),
+                      SizedBox(height: 6),
+                      Text(
+                        'Kurangi sampah makanan dari setiap porsi yang kamu ambil',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Color(0xD9FFFFFF),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         ),
@@ -522,7 +644,7 @@ class _ListingMakananState extends State<ListingMakanan> {
 
   Widget _buildCategories() {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -534,27 +656,13 @@ class _ListingMakananState extends State<ListingMakanan> {
                   child: Text(
                     'Kategori makanan',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 15,
                       fontWeight: FontWeight.w800,
+                      letterSpacing: -0.2,
                       color: _ink,
                     ),
                   ),
                 ),
-                FilterChip(
-                  label: const Text('Halal'),
-                  avatar: const Icon(Icons.verified_outlined, size: 16),
-                  selected: _selectedCategory == 'Halal',
-                  onSelected: (selected) => setState(
-                    () => _selectedCategory = selected ? 'Halal' : 'Semua',
-                  ),
-                  backgroundColor: Colors.white,
-                  selectedColor: BagiPorsiColors.mint,
-                  side: const BorderSide(color: BagiPorsiColors.border),
-                  shape: const StadiumBorder(),
-                  labelStyle: const TextStyle(fontSize: 11, color: _green),
-                  visualDensity: VisualDensity.compact,
-                ),
-                const SizedBox(width: 4),
                 IconButton(
                   tooltip: 'Semua kategori',
                   visualDensity: VisualDensity.compact,
@@ -568,7 +676,7 @@ class _ListingMakananState extends State<ListingMakanan> {
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           SingleChildScrollView(
             key: const ValueKey('food-category-scroll'),
             scrollDirection: Axis.horizontal,
@@ -635,6 +743,158 @@ class _ListingMakananState extends State<ListingMakanan> {
               }),
             ),
           ),
+          const SizedBox(height: 12),
+          _buildSubCategoryFilterRow(),
+        ],
+      ),
+    );
+  }
+
+  void _showPreferenceSheet() {
+    const options = ['Semua', 'Porsi gratis', 'Harga hemat'];
+    showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: Colors.white,
+      builder: (sheetContext) => SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Preferensi makanan',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: _ink,
+                ),
+              ),
+              const SizedBox(height: 12),
+              for (final option in options)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    option == 'Semua' ? 'Semua porsi' : option,
+                    style: TextStyle(
+                      fontWeight: _selectedPreference == option
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                      color: _selectedPreference == option ? _green : _ink,
+                    ),
+                  ),
+                  trailing: _selectedPreference == option
+                      ? const Icon(Icons.check_circle_rounded, color: _green)
+                      : null,
+                  onTap: () {
+                    setState(() => _selectedPreference = option);
+                    Navigator.pop(sheetContext);
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showSortSheet() {
+    const options = ['Rekomendasi', 'Terdekat', 'Stok terbanyak'];
+    showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: Colors.white,
+      builder: (sheetContext) => SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Urutkan makanan',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: _ink,
+                ),
+              ),
+              const SizedBox(height: 12),
+              for (final option in options)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    option,
+                    style: TextStyle(
+                      fontWeight: _sortBy == option
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                      color: _sortBy == option ? _green : _ink,
+                    ),
+                  ),
+                  trailing: _sortBy == option
+                      ? const Icon(Icons.check_circle_rounded, color: _green)
+                      : null,
+                  onTap: () {
+                    setState(() => _sortBy = option);
+                    Navigator.pop(sheetContext);
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubCategoryFilterRow() {
+    final hasCategory = _selectedCategory != 'Semua';
+    final hasPreference = _selectedPreference != 'Semua';
+    final hasSort = _sortBy != 'Rekomendasi';
+    final hasAnyFilter = hasCategory || hasPreference || hasSort;
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          if (hasCategory) ...[
+            _FilterPillButton(
+              icon: Icons.ramen_dining_rounded,
+              label: 'Kategori: $_selectedCategory',
+              hasDropdown: true,
+              selected: true,
+              onTap: _showCategoryGrid,
+            ),
+            const SizedBox(width: 8),
+          ],
+          _FilterPillButton(
+            icon: Icons.swap_vert_rounded,
+            label: hasSort ? 'Urut: $_sortBy' : 'Urutkan',
+            hasDropdown: true,
+            selected: hasSort,
+            onTap: _showSortSheet,
+          ),
+          const SizedBox(width: 8),
+          _FilterPillButton(
+            icon: Icons.restaurant_rounded,
+            label: hasPreference ? _selectedPreference : 'Preferensi',
+            hasDropdown: true,
+            selected: hasPreference,
+            onTap: _showPreferenceSheet,
+          ),
+          if (hasAnyFilter) ...[
+            const SizedBox(width: 8),
+            _FilterPillButton(
+              icon: Icons.restart_alt_rounded,
+              label: 'Reset',
+              onTap: _resetFilters,
+            ),
+          ],
         ],
       ),
     );
@@ -680,6 +940,71 @@ class _ListingMakananState extends State<ListingMakanan> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _FilterPillButton extends StatelessWidget {
+  const _FilterPillButton({
+    required this.icon,
+    required this.onTap,
+    this.label,
+    this.hasDropdown = false,
+    this.selected = false,
+  });
+
+  final IconData icon;
+  final String? label;
+  final bool hasDropdown;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final fgColor = selected ? _green : _ink;
+    return Material(
+      color: selected ? const Color(0xFFF1F9F5) : Colors.white,
+      shape: StadiumBorder(
+        side: BorderSide(
+          color: selected ? _green : const Color(0xFFD0D7D4),
+          width: selected ? 1.3 : 1.0,
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: label == null ? 12 : 13,
+            vertical: 8,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16, color: fgColor),
+              if (label != null) ...[
+                const SizedBox(width: 6),
+                Text(
+                  label!,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                    color: fgColor,
+                  ),
+                ),
+              ],
+              if (hasDropdown) ...[
+                const SizedBox(width: 3),
+                Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 17,
+                  color: fgColor,
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -840,125 +1165,6 @@ class _HeaderWaveClipper extends CustomClipper<Path> {
   bool shouldReclip(_HeaderWaveClipper oldClipper) => false;
 }
 
-class _FoodSearchDelegate extends SearchDelegate<String?> {
-  _FoodSearchDelegate({required this.foods})
-    : super(searchFieldLabel: 'Cari makanan atau toko...');
-
-  final List<FoodListing> foods;
-
-  @override
-  ThemeData appBarTheme(BuildContext context) => Theme.of(context).copyWith(
-    appBarTheme: const AppBarTheme(
-      backgroundColor: Colors.white,
-      foregroundColor: Colors.black,
-      surfaceTintColor: Colors.transparent,
-      elevation: 0,
-      scrolledUnderElevation: 0,
-      systemOverlayStyle: SystemUiOverlayStyle.dark,
-    ),
-    scaffoldBackgroundColor: Colors.white,
-  );
-
-  @override
-  Widget buildLeading(BuildContext context) => IconButton(
-    tooltip: 'Kembali',
-    icon: const Icon(Icons.arrow_back),
-    onPressed: () => close(context, null),
-  );
-
-  @override
-  List<Widget> buildActions(BuildContext context) => [
-    if (query.isNotEmpty)
-      IconButton(
-        tooltip: 'Hapus pencarian',
-        icon: const Icon(Icons.close),
-        onPressed: () => query = '',
-      ),
-  ];
-
-  @override
-  Widget buildSuggestions(BuildContext context) => _buildMatches(context);
-
-  @override
-  Widget buildResults(BuildContext context) => _buildMatches(context);
-
-  Widget _buildMatches(BuildContext context) {
-    final keyword = query.trim().toLowerCase();
-    final matches = foods
-        .where(
-          (food) => '${food.foodName} ${food.merchantName}'
-              .toLowerCase()
-              .contains(keyword),
-        )
-        .toList();
-
-    return SafeArea(
-      top: false,
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 16, 18, 8),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                '${matches.length} pilihan makanan tersedia',
-                style: const TextStyle(color: BagiPorsiColors.muted),
-              ),
-            ),
-          ),
-          Expanded(
-            child: matches.isEmpty
-                ? const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Text(
-                        'Makanan belum ditemukan',
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  )
-                : ListView.builder(
-                    keyboardDismissBehavior:
-                        ScrollViewKeyboardDismissBehavior.onDrag,
-                    itemCount: matches.length,
-                    itemBuilder: (context, index) {
-                      final food = matches[index];
-                      return ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 4,
-                        ),
-                        leading: const Icon(
-                          Icons.restaurant_rounded,
-                          color: _green,
-                        ),
-                        title: Text(food.foodName),
-                        subtitle: Text(food.merchantName),
-                        trailing: const Icon(
-                          Icons.north_west_rounded,
-                          size: 20,
-                        ),
-                        onTap: () => close(context, food.foodName),
-                      );
-                    },
-                  ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: () => close(context, query),
-                child: const Text('Tampilkan hasil di Beranda'),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class FoodCard extends StatelessWidget {
   final String merchantName,
       foodName,
@@ -968,6 +1174,11 @@ class FoodCard extends StatelessWidget {
       imageUrl;
   final int portionsLeft;
   final bool isFree;
+  final bool isFavorite;
+  final VoidCallback? onToggleFavorite;
+  final VoidCallback? onDirections;
+  final bool selected;
+  final String actionLabel;
 
   const FoodCard({
     super.key,
@@ -979,7 +1190,31 @@ class FoodCard extends StatelessWidget {
     required this.discountPrice,
     required this.imageUrl,
     required this.isFree,
+    this.isFavorite = false,
+    this.onToggleFavorite,
+    this.onDirections,
+    this.selected = false,
+    this.actionLabel = 'Ambil',
   });
+
+  void _openDetails(BuildContext context) {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (context) => DetailMakanan(
+          merchantName: merchantName,
+          foodName: foodName,
+          distance: distance,
+          portionsLeft: portionsLeft,
+          originalPrice: originalPrice,
+          discountPrice: discountPrice,
+          imageUrl: imageUrl,
+          isFree: isFree,
+          initialIsFavorite: isFavorite,
+          onToggleFavorite: onToggleFavorite,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -998,192 +1233,323 @@ class FoodCard extends StatelessWidget {
           ),
         ) ??
         portionsLeft;
-    return Material(
-      color: Colors.white,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: selected ? BagiPorsiColors.mint.withAlpha(110) : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: selected ? _green : BagiPorsiColors.border,
+          width: selected ? 1.5 : 1,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A183C32),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: remaining <= 0 ? null : () => _openDetails(context),
+          child: Padding(
+            padding: const EdgeInsets.all(11),
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final photoSize = math.min(96.0, constraints.maxWidth * .26);
+                final photoSize = math.min(78.0, constraints.maxWidth * .25);
                 return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    IntrinsicHeight(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          SizedBox(
-                            width: photoSize,
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Stack(
-                                children: [
-                                  Positioned.fill(
-                                    child: Image.network(
-                                      imageUrl,
-                                      fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) =>
-                                              const ColoredBox(
-                                                color: Color(0xFFEDF3EB),
-                                                child: Icon(
-                                                  Icons.broken_image_outlined,
-                                                  size: 30,
-                                                  color: _green,
-                                                  semanticLabel: 'Gambar makanan tidak tersedia',
-                                                ),
-                                              ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: photoSize,
+                          height: photoSize,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(15),
+                            child: Stack(
                               children: [
-                                Text(
-                                  isFree ? 'Gratis' : 'Harga hemat',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                    color: isFree
-                                        ? _green
-                                        : const Color(0xFF9B5B18),
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  foodName,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: 15,
-                                    height: 1.3,
-                                    fontWeight: FontWeight.w800,
-                                    color: _ink,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  merchantName,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: BagiPorsiColors.muted,
-                                  ),
-                                ),
-                                const SizedBox(height: 7),
-                                Wrap(
-                                  spacing: 10,
-                                  runSpacing: 4,
-                                  crossAxisAlignment: WrapCrossAlignment.center,
-                                  children: [
-                                    Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(
-                                          Icons.location_on_outlined,
-                                          size: 12,
-                                          color: BagiPorsiColors.muted,
-                                        ),
-                                        const SizedBox(width: 3),
-                                        Text(
-                                          distance,
-                                          style: const TextStyle(
-                                            fontSize: 11,
-                                            color: BagiPorsiColors.muted,
+                                Positioned.fill(
+                                  child: Image.network(
+                                    imageUrl,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (
+                                          context,
+                                          error,
+                                          stackTrace,
+                                        ) => const ColoredBox(
+                                          color: Color(0xFFEDF3EB),
+                                          child: Icon(
+                                            Icons.broken_image_outlined,
+                                            size: 28,
+                                            color: _green,
+                                            semanticLabel:
+                                                'Gambar makanan tidak tersedia',
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                    RichText(
-                                      text: TextSpan(
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          color: Color(0xFF9B5B18),
-                                        ),
-                                        children: [
-                                          const TextSpan(text: 'Sisa '),
-                                          TextSpan(
-                                            text: '$remaining porsi',
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
+                                  ),
                                 ),
-                                const SizedBox(height: 10),
-                                Wrap(
-                                  spacing: 10,
-                                  runSpacing: 4,
-                                  crossAxisAlignment: WrapCrossAlignment.center,
-                                  children: [
-                                    Text(
-                                      discountPrice,
+                                Positioned(
+                                  top: 6,
+                                  left: 6,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 7,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isFree
+                                          ? _green
+                                          : BagiPorsiColors.orange,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      isFree ? 'Gratis' : 'Hemat',
                                       style: const TextStyle(
-                                        fontSize: 17,
+                                        fontSize: 9,
                                         fontWeight: FontWeight.w800,
-                                        color: _green,
+                                        color: Colors.white,
                                       ),
                                     ),
-                                    Text(
-                                      originalPrice,
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        color: BagiPorsiColors.muted,
-                                        decoration: TextDecoration.lineThrough,
-                                      ),
-                                    ),
-                                  ],
+                                  ),
                                 ),
                               ],
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: remaining <= 0
-                            ? null
-                            : () => Navigator.of(context).push<void>(
-                                MaterialPageRoute<void>(
-                                  builder: (context) => DetailMakanan(
-                                    merchantName: merchantName,
-                                    foodName: foodName,
-                                    distance: distance,
-                                    portionsLeft: portionsLeft,
-                                    originalPrice: originalPrice,
-                                    discountPrice: discountPrice,
-                                    imageUrl: imageUrl,
-                                    isFree: isFree,
-                                  ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                foodName,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  height: 1.25,
+                                  letterSpacing: -0.25,
+                                  fontWeight: FontWeight.w800,
+                                  color: _ink,
                                 ),
                               ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text(
-                              'Ambil',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
+                              const SizedBox(height: 4),
+                              Wrap(
+                                spacing: 5,
+                                runSpacing: 2,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  const Icon(
+                                    Icons.star_rounded,
+                                    size: 14,
+                                    color: Color(0xFFFFB300),
+                                  ),
+                                  const Text(
+                                    '4.8',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: _ink,
+                                    ),
+                                  ),
+                                  const Text(
+                                    '·',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: BagiPorsiColors.muted,
+                                    ),
+                                  ),
+                                  Text(
+                                    merchantName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: BagiPorsiColors.muted,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 4,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.location_on_outlined,
+                                        size: 12,
+                                        color: BagiPorsiColors.muted,
+                                      ),
+                                      const SizedBox(width: 2),
+                                      Text(
+                                        distance,
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: BagiPorsiColors.muted,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  RichText(
+                                    text: TextSpan(
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: _green,
+                                      ),
+                                      children: [
+                                        const TextSpan(text: 'Sisa '),
+                                        TextSpan(
+                                          text: '$remaining porsi',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (onToggleFavorite != null)
+                          SizedBox(
+                            width: 34,
+                            height: 34,
+                            child: IconButton(
+                              tooltip: isFavorite
+                                  ? 'Hapus favorit'
+                                  : 'Simpan favorit',
+                              padding: EdgeInsets.zero,
+                              onPressed: onToggleFavorite,
+                              icon: Icon(
+                                isFavorite
+                                    ? Icons.favorite_rounded
+                                    : Icons.favorite_border_rounded,
+                                color: isFavorite
+                                    ? const Color(0xFFE53935)
+                                    : BagiPorsiColors.muted,
+                                size: 22,
                               ),
                             ),
-                            const SizedBox(width: 6),
-                            const Icon(Icons.arrow_forward_rounded, size: 15),
-                          ],
-                        ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    const Divider(height: 1, color: BagiPorsiColors.border),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8FAF9),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: BagiPorsiColors.border),
+                            ),
+                            child: Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 6,
+                              runSpacing: 4,
+                              children: [
+                                const Icon(
+                                  Icons.local_offer_rounded,
+                                  size: 13,
+                                  color: BagiPorsiColors.orange,
+                                ),
+                                Text(
+                                  discountPrice,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.2,
+                                    color: _green,
+                                  ),
+                                ),
+                                Text(
+                                  originalPrice,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: BagiPorsiColors.muted,
+                                    decoration: TextDecoration.lineThrough,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 4,
+                            runSpacing: 8,
+                            children: [
+                              if (onDirections != null)
+                                IconButton(
+                                  tooltip: 'Petunjuk pengambilan',
+                                  onPressed: onDirections,
+                                  icon: const Icon(
+                                    Icons.directions_outlined,
+                                    color: _green,
+                                  ),
+                                ),
+                              TextButton(
+                                onPressed: remaining <= 0
+                                    ? null
+                                    : () => _openDetails(context),
+                                style: TextButton.styleFrom(
+                                  backgroundColor: _green,
+                                  foregroundColor: Colors.white,
+                                  disabledBackgroundColor:
+                                      BagiPorsiColors.border,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                  ),
+                                  minimumSize: const Size(0, 36),
+                                  shape: const StadiumBorder(),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        actionLabel,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 5),
+                                    const Icon(
+                                      Icons.arrow_forward_rounded,
+                                      size: 14,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -1191,8 +1557,7 @@ class FoodCard extends StatelessWidget {
               },
             ),
           ),
-          const Divider(height: 1, color: BagiPorsiColors.border),
-        ],
+        ),
       ),
     );
   }

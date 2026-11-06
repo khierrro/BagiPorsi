@@ -49,7 +49,7 @@ void main() {
       expect(detail.isFree, selection.free);
       expect(find.text(selection.name), findsOneWidget);
       expect(find.text(selection.merchant), findsOneWidget);
-      expect(find.text('Detail makanan'), findsOneWidget);
+      expect(find.text('Detail makanan'), findsNothing);
       expect(find.text('Total · 1 porsi'), findsOneWidget);
       expect(find.byType(NavigationBar), findsNothing);
 
@@ -96,6 +96,13 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('Total · 2 porsi'), findsOneWidget);
         expect(find.text(isFree ? 'Gratis' : 'Rp 20.000'), findsWidgets);
+        final buttonRight = tester
+            .getRect(find.widgetWithText(FilledButton, 'Lanjut ambil'))
+            .right;
+        final totalPriceRight = tester
+            .getRect(find.text(isFree ? 'Gratis' : 'Rp 20.000').last)
+            .right;
+        expect(totalPriceRight, closeTo(buttonRight, 1.0));
         expect(
           tester
               .widget<IconButton>(

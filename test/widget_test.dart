@@ -22,7 +22,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(ListingMakanan), findsOneWidget);
-    expect(find.text('Porsi baik, harga lebih hemat.'), findsOneWidget);
+    expect(find.text('Selamatkan porsi, jaga bumi kita.'), findsOneWidget);
     expect(find.byType(NavigationDestination), findsNWidgets(5));
     await tester.drag(find.byType(CustomScrollView), const Offset(0, -300));
     await tester.pumpAndSettle();

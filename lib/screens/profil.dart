@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../data/user_profile_store.dart';
 import '../design/bagi_porsi_theme.dart';
-import '../widgets/feature_widgets.dart';
+import '../widgets/claim_scope.dart';
 import 'klaim_saya.dart';
 import 'lokasi.dart';
 import 'profil_edit.dart';
+import 'profil_pages.dart';
 import 'restoran_favorit.dart';
 
 class Profil extends StatefulWidget {
@@ -27,7 +28,7 @@ class _ProfilState extends State<Profil> {
 
   void _editName() {
     Navigator.of(context).push<void>(
-      MaterialPageRoute(builder: (_) => ProfilEditPage(profile: _profile)),
+      MaterialPageRoute(builder: (_) => ProfilDetailPage(profile: _profile)),
     );
   }
 
@@ -43,280 +44,154 @@ class _ProfilState extends State<Profil> {
     );
   }
 
-  void _notificationSettings() {
-    showFeatureSheet(
-      context,
-      title: 'Preferensi notifikasi',
-      icon: Icons.notifications_outlined,
-      message: 'Atur preferensi pengingat aktivitasmu.',
-      content: ListenableBuilder(
-        listenable: _profile,
-        builder: (context, child) => SwitchListTile.adaptive(
-          contentPadding: EdgeInsets.zero,
-          title: const Text('Pengingat aktivitas'),
-          subtitle: const Text(
-            'Simpan preferensi untuk pengingat pengambilan.',
-          ),
-          value: _profile.notificationsEnabled,
-          onChanged: _profile.setNotifications,
-          activeTrackColor: BagiPorsiColors.green,
-        ),
-      ),
-    );
-  }
-
   void _help() {
-    showFeatureSheet(
+    Navigator.of(
       context,
-      title: 'Pusat bantuan',
-      icon: Icons.help_outline_rounded,
-      message: 'Kenali cara menemukan dan mengambil porsi baik.',
-      content: const Column(
-        children: [
-          ExpansionTile(
-            tilePadding: EdgeInsets.zero,
-            title: Text(
-              'Bagaimana cara mengambil makanan?',
-              style: TextStyle(fontSize: 14),
-            ),
-            children: [
-              Padding(
-                padding: EdgeInsets.only(bottom: 16),
-                child: Text(
-                  'Pilih makanan, buka detailnya, lalu hubungi toko lewat Chat untuk memastikan stok, alamat, dan waktu pengambilan.',
-                  style: TextStyle(height: 1.5, color: BagiPorsiColors.muted),
-                ),
-              ),
-            ],
-          ),
-          ExpansionTile(
-            tilePadding: EdgeInsets.zero,
-            title: Text(
-              'Apakah semua makanan gratis?',
-              style: TextStyle(fontSize: 14),
-            ),
-            children: [
-              Padding(
-                padding: EdgeInsets.only(bottom: 16),
-                child: Text(
-                  'Ada pilihan gratis dan pilihan dengan harga hemat. Harga setiap porsi tertera pada kartu makanan.',
-                  style: TextStyle(height: 1.5, color: BagiPorsiColors.muted),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+    ).push<void>(MaterialPageRoute(builder: (_) => const PusatBantuanPage()));
+  }
+
+  void _about() {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute(builder: (_) => const TentangBagiPorsiPage()),
     );
   }
 
-  void _showPoints() => showFeatureSheet(
-    context,
-    title: 'Poin kamu',
-    icon: Icons.stars_rounded,
-    message: '0 poin terkumpul. Belum ada aktivitas poin untuk ditampilkan.',
-  );
+  void _showPoints() {
+    final store = ClaimScope.maybeOf(context)?.store;
+    Navigator.of(
+      context,
+    ).push<void>(MaterialPageRoute(builder: (_) => PoinKamuPage(store: store)));
+  }
 
   void _showHistory() => openClaims(context, history: true);
 
-  void _showImpact() => showFeatureSheet(
-    context,
-    title: 'Dampak baikmu',
-    icon: Icons.eco_outlined,
-    message: 'Setiap porsi berarti. Porsi pertamamu akan menjadi awal dampak baik di sini.',
-    content: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: _ImpactStat(
-                value: '0',
-                label: 'Porsi diselamatkan',
-                icon: Icons.restaurant_rounded,
-              ),
-            ),
-            SizedBox(width: 20),
-            Expanded(
-              child: _ImpactStat(
-                value: 'Rp0',
-                label: 'Total penghematan',
-                icon: Icons.savings_outlined,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 76,
-          child: CarouselView(
-            itemExtent: 230,
-            shrinkExtent: 190,
-            backgroundColor: BagiPorsiColors.mint,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-            children: const [
-              Padding(
-                padding: EdgeInsets.all(12),
-                child: Center(
-                  child: Text(
-                    'SDG 2 · Zero Hunger: kurangi makanan layak konsumsi yang terbuang.',
-                    style: TextStyle(
-                      fontSize: 11,
-                      height: 1.35,
-                      color: BagiPorsiColors.ink,
-                    ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.all(12),
-                child: Center(
-                  child: Text(
-                    'Ambil tepat waktu sesuai jadwal yang disepakati dengan toko.',
-                    style: TextStyle(
-                      fontSize: 11,
-                      height: 1.35,
-                      color: BagiPorsiColors.ink,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    ),
-  );
+  void _showImpact() {
+    final store = ClaimScope.maybeOf(context)?.store;
+    Navigator.of(context).push<void>(
+      MaterialPageRoute(builder: (_) => DampakBaikPage(store: store)),
+    );
+  }
 
   @override
-  Widget build(BuildContext context) => ListenableBuilder(
-    listenable: _profile,
-    builder: (context, child) => Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        bottom: false,
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 720),
-            child: ListView(
-              padding: const EdgeInsets.only(bottom: 28),
-              children: [
-                Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [BagiPorsiColors.mint, BagiPorsiColors.canvas],
-                      stops: [0, .45],
+  Widget build(BuildContext context) {
+    final claims = ClaimScope.maybeOf(context)?.store;
+    final points = claims?.points ?? 0;
+    final rescued = claims?.rescuedPortions ?? 0;
+    return ListenableBuilder(
+      listenable: _profile,
+      builder: (context, child) => Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          bottom: false,
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 720),
+              child: ListView(
+                padding: const EdgeInsets.only(bottom: 28),
+                children: [
+                  Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [BagiPorsiColors.mint, BagiPorsiColors.canvas],
+                        stops: [0, .45],
+                      ),
                     ),
-                  ),
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                  child: Column(
-                    children: [
-                      _identityCard(),
-                      const SizedBox(height: 16),
-                      _shortcutPair(
-                        _ProfileShortcut(
-                          icon: Icons.volunteer_activism_outlined,
-                          title: 'Dampak baikmu',
-                          subtitle: '0 porsi diselamatkan',
-                          featured: true,
-                          onTap: _showImpact,
-                        ),
-                        _ProfileShortcut(
-                          icon: Icons.add_location_alt_outlined,
-                          title: 'Lokasi pengambilan',
-                          subtitle:
-                              _profile.location ?? 'Atur lokasi terdekatmu',
-                          onTap: _editLocation,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      _shortcutPair(
-                        _ProfileShortcut(
-                          icon: Icons.favorite_rounded,
-                          title: 'Restoran favorit',
-                          subtitle: '${_profile.favorites.length} tersimpan',
-                          compact: true,
-                          onTap: _showFavorites,
-                        ),
-                        _ProfileShortcut(
-                          icon: Icons.receipt_long_outlined,
-                          title: 'Riwayat pengambilan',
-                          subtitle: 'Lihat aktivitasmu',
-                          compact: true,
-                          onTap: _showHistory,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _groupTitle('Lebih banyak kebaikan'),
-                      _menu('Poin kamu', detail: '0 poin', onTap: _showPoints),
-                      _menu(
-                        'Dampak baikmu',
-                        detail: '0 porsi',
-                        onTap: _showImpact,
-                      ),
-                      _groupTitle('Umum'),
-                      _menu('Restoran favorit', onTap: _showFavorites),
-                      _menu('Riwayat pengambilan', onTap: _showHistory),
-                      _menu(
-                        'Lokasi tersimpan',
-                        subtitle: _profile.location,
-                        onTap: _editLocation,
-                      ),
-                      _menu(
-                        'Notifikasi',
-                        detail: _profile.notificationsEnabled
-                            ? 'Aktif'
-                            : 'Nonaktif',
-                        onTap: _notificationSettings,
-                      ),
-                      _groupTitle('Bantuan'),
-                      _menu('Pusat bantuan', onTap: _help),
-                      _menu(
-                        'Tentang BagiPorsi',
-                        onTap: () => showFeatureSheet(
-                          context,
-                          title: 'Porsi baik untuk semua',
-                          icon: Icons.volunteer_activism_outlined,
-                          message: 'BagiPorsi mempertemukan makanan yang masih tersedia dengan orang yang membutuhkannya. Temukan porsi gratis atau harga hemat, lalu koordinasikan pengambilan dengan toko.',
-                        ),
-                      ),
-                      const SizedBox(height: 28),
-                      const Center(
-                        child: Text(
-                          'BagiPorsi · Setiap porsi berarti',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: BagiPorsiColors.muted,
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                    child: Column(
+                      children: [
+                        _identityCard(points),
+                        const SizedBox(height: 16),
+                        _shortcutPair(
+                          _ProfileShortcut(
+                            icon: Icons.volunteer_activism_outlined,
+                            title: 'Dampak baikmu',
+                            subtitle: '$rescued porsi diselamatkan',
+                            featured: true,
+                            onTap: _showImpact,
+                          ),
+                          _ProfileShortcut(
+                            icon: Icons.add_location_alt_outlined,
+                            title: 'Lokasi pengambilan',
+                            subtitle:
+                                _profile.location ?? 'Atur lokasi terdekatmu',
+                            onTap: _editLocation,
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 12),
+                        _shortcutPair(
+                          _ProfileShortcut(
+                            icon: Icons.favorite_rounded,
+                            title: 'Restoran favorit',
+                            subtitle: '${_profile.favorites.length} tersimpan',
+                            compact: true,
+                            onTap: _showFavorites,
+                          ),
+                          _ProfileShortcut(
+                            icon: Icons.receipt_long_outlined,
+                            title: 'Riwayat pengambilan',
+                            subtitle: 'Lihat aktivitasmu',
+                            compact: true,
+                            onTap: _showHistory,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _groupTitle('Lebih banyak kebaikan'),
+                        _menu(
+                          'Poin kamu',
+                          detail: '$points poin',
+                          onTap: _showPoints,
+                        ),
+                        _menu(
+                          'Dampak baikmu',
+                          detail: '$rescued porsi',
+                          onTap: _showImpact,
+                        ),
+                        _groupTitle('Umum'),
+                        _menu('Restoran favorit', onTap: _showFavorites),
+                        _menu('Riwayat pengambilan', onTap: _showHistory),
+                        _menu(
+                          'Lokasi tersimpan',
+                          subtitle: _profile.savedLocations.isEmpty
+                              ? _profile.location
+                              : '${_profile.savedLocations.length} tempat · ${_profile.location ?? ''}',
+                          onTap: _editLocation,
+                        ),
+                        _groupTitle('Bantuan'),
+                        _menu('Pusat bantuan', onTap: _help),
+                        _menu('Tentang BagiPorsi', onTap: _about),
+                        const SizedBox(height: 28),
+                        const Center(
+                          child: Text(
+                            'BagiPorsi · Setiap porsi berarti',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: BagiPorsiColors.muted,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 
-  Widget _identityCard() => Container(
+  Widget _identityCard(int points) => Container(
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(20),
@@ -384,7 +259,7 @@ class _ProfilState extends State<Profil> {
               const SizedBox(width: 8),
               _identityBadge(
                 Icons.stars_rounded,
-                '0 poin terkumpul',
+                '$points poin terkumpul',
                 _showPoints,
               ),
             ],
@@ -607,43 +482,4 @@ class _ProfileShortcut extends StatelessWidget {
       ),
     );
   }
-}
-
-class _ImpactStat extends StatelessWidget {
-  const _ImpactStat({
-    required this.value,
-    required this.label,
-    required this.icon,
-  });
-  final String value, label;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, color: BagiPorsiColors.green, size: 24),
-        const SizedBox(height: 14),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 27,
-            fontWeight: FontWeight.w800,
-            color: BagiPorsiColors.ink,
-          ),
-        ),
-        const SizedBox(height: 5),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 11,
-            height: 1.5,
-            color: BagiPorsiColors.muted,
-          ),
-        ),
-      ],
-    ),
-  );
 }

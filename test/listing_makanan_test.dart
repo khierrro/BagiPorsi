@@ -55,7 +55,7 @@ void main() {
       );
       final boundary = tester.renderObject<RenderRepaintBoundary>(wave);
       final initialText = tester.getRect(
-        find.text('Porsi baik, harga lebih hemat.'),
+        find.text('Selamatkan porsi, jaga bumi kita.'),
       );
       final greenContent = find.descendant(
         of: hero,
@@ -74,7 +74,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 750));
       expect(await pixels(), isNot(orderedEquals(firstFrame!)));
       expect(
-        tester.getRect(find.text('Porsi baik, harga lebih hemat.')),
+        tester.getRect(find.text('Selamatkan porsi, jaga bumi kita.')),
         initialText,
       );
       expect(tester.getRect(greenContent), initialHero);
@@ -117,9 +117,7 @@ void main() {
       final title = find.text('Bagi Porsi');
       final initialTitleRect = tester.getRect(title);
       final initialHeaderRect = tester.getRect(find.byType(AppBar));
-      final navbar = tester.widget<SliverAppBar>(find.byType(SliverAppBar));
-      final searchExtent = navbar.expandedHeight! - navbar.toolbarHeight;
-      final pinnedHeight = initialHeaderRect.height - searchExtent;
+      final pinnedHeight = initialHeaderRect.height;
       final scrollView = tester.widget<CustomScrollView>(
         find.byType(CustomScrollView),
       );
@@ -129,6 +127,7 @@ void main() {
         matching: find.byType(ClipPath),
       );
       final heroHeight = tester.getSize(hero).height;
+      expect(tester.getSize(hero).width, width);
 
       expect(header().backgroundColor, BagiPorsiColors.deepGreen);
       expect(header().foregroundColor, Colors.white);
@@ -139,7 +138,7 @@ void main() {
       expect(initialTitleRect.top, greaterThanOrEqualTo(28));
 
       // The real hero and safe header sizes define the transition boundary.
-      controller.jumpTo(searchExtent + heroHeight - pinnedHeight / 2);
+      controller.jumpTo(heroHeight / 2);
       await tester.pump();
       final halfwayColor = header().backgroundColor;
       expect(halfwayColor, isNot(BagiPorsiColors.deepGreen));
@@ -147,7 +146,7 @@ void main() {
       expect(tester.getRect(title), initialTitleRect);
       expect(tester.getSize(find.byType(AppBar)).height, pinnedHeight);
 
-      controller.jumpTo(searchExtent + heroHeight + 1);
+      controller.jumpTo(heroHeight + 1);
       await tester.pumpAndSettle();
       expect(header().backgroundColor, Colors.white);
       expect(header().foregroundColor, Colors.black);
@@ -158,9 +157,10 @@ void main() {
         Brightness.dark,
       );
       expect(tester.getRect(title), initialTitleRect);
-      expect(find.byTooltip('Buka pencarian'), findsOneWidget);
+      expect(find.byTooltip('Buka pencarian'), findsNothing);
+      expect(find.byType(TextField), findsOneWidget);
 
-      controller.jumpTo(searchExtent + heroHeight - pinnedHeight / 2);
+      controller.jumpTo(heroHeight / 2);
       await tester.pump();
       expect(header().backgroundColor, halfwayColor);
       controller.jumpTo(0);
@@ -174,7 +174,7 @@ void main() {
     });
   }
 
-  testWidgets('Ikon pencarian membuka hasil dan menerapkan filter Beranda', (
+  testWidgets('Search bar tunggal tetap aktif dan tombol filter berfungsi', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(390, 700);
@@ -184,71 +184,54 @@ void main() {
     await tester.pumpWidget(const BagiPorsiApp());
     await tester.pumpAndSettle();
 
-    expect(
-      find.descendant(
-        of: find.byType(SliverAppBar),
-        matching: find.byType(TextField),
-      ),
-      findsOneWidget,
-    );
-    expect(find.text('Halo, Pejuang Pangan!'), findsNothing);
-    expect(find.text('Temukan porsi baik di sekitarmu.'), findsNothing);
-    expect(
-      find.text('Kurangi makanan terbuang,\nmulai dari satu porsi.'),
-      findsNothing,
-    );
-    await showResults(tester);
-    final scrollPosition = tester
-        .widget<CustomScrollView>(find.byType(CustomScrollView))
-        .controller!
-        .offset;
-    await tester.tap(find.byTooltip('Buka pencarian'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), '  WARUNG  ');
-    await tester.pumpAndSettle();
-    expect(find.text('Nasi Uduk Komplit'), findsOneWidget);
-    expect(find.text('Roti Gandum & Croissant'), findsNothing);
-    await tester.tap(find.text('Tampilkan hasil di Beranda'));
-    await tester.pumpAndSettle();
-    expect(foodNames(tester), ['Nasi Uduk Komplit']);
-    final controller = tester
-        .widget<CustomScrollView>(find.byType(CustomScrollView))
-        .controller!;
-    expect(
-      controller.offset,
-      scrollPosition.clamp(0, controller.position.maxScrollExtent),
-    );
+    expect(find.byType(TextField), findsOneWidget);
+    expect(find.byTooltip('Buka pencarian'), findsNothing);
 
-    await tester.tap(find.byTooltip('Buka pencarian'));
-    await tester.pumpAndSettle();
-    expect(
-      tester.widget<TextField>(find.byType(TextField)).controller!.text,
-      '  WARUNG  ',
+    await showResults(tester);
+    expect(find.byType(TextField), findsOneWidget);
+    expect(find.byTooltip('Buka pencarian'), findsNothing);
+
+    await Scrollable.ensureVisible(
+      tester.element(find.text('Urutkan')),
+      alignment: 0.5,
     );
-    await tester.tap(find.byTooltip('Hapus pencarian'));
     await tester.pumpAndSettle();
-    expect(find.text('4 pilihan makanan tersedia'), findsOneWidget);
-    await tester.tap(find.text('Tampilkan hasil di Beranda'));
+    await tester.tap(find.text('Urutkan'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Terdekat'));
+    await tester.pumpAndSettle();
+    await showResults(tester);
+    expect(foodNames(tester).first, 'Paket Sayuran Segar');
+
+    await Scrollable.ensureVisible(
+      tester.element(find.text('Preferensi')),
+      alignment: 0.5,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Preferensi'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Porsi gratis'));
+    await tester.pumpAndSettle();
+    await showResults(tester);
+    expect(foodNames(tester), ['Roti Gandum & Croissant', 'Paket Buah Campur']);
+
+    await Scrollable.ensureVisible(
+      tester.element(find.text('Reset')),
+      alignment: 0.5,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Reset'));
     await tester.pumpAndSettle();
     expect(find.text('4 pilihan makanan tersedia'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Notifikasi dan riwayat dari kartu informasi dapat dibuka', (
-    tester,
-  ) async {
+  testWidgets('Notifikasi dari header Beranda dapat dibuka', (tester) async {
     await tester.pumpWidget(const BagiPorsiApp());
     await tester.tap(find.byTooltip('Notifikasi'));
     await tester.pumpAndSettle();
     expect(find.text('Belum ada notifikasi'), findsOneWidget);
     await tester.tap(find.text('Tutup'));
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Lihat riwayatmu'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Lihat riwayatmu'));
-    await tester.pumpAndSettle();
-    expect(find.text('Belum ada riwayat klaim'), findsOneWidget);
-    await tester.pageBack();
     await tester.pumpAndSettle();
     expect(find.byType(ListingMakanan), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -290,7 +273,9 @@ void main() {
     expect(foodNames(tester), ['Roti Gandum & Croissant']);
 
     await showSearch(tester);
-    await tester.tap(find.text('Halal'));
+    await tester.ensureVisible(find.text('Nasi'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Nasi'));
     await tester.pumpAndSettle();
     await showResults(tester);
     expect(foodNames(tester), ['Nasi Uduk Komplit']);

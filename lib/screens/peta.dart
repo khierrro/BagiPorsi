@@ -10,6 +10,7 @@ import '../widgets/claim_scope.dart';
 import '../widgets/feature_widgets.dart';
 import '../widgets/home_quick_actions.dart';
 import 'chat_penjual.dart';
+import 'listing_makanan.dart';
 
 class Peta extends StatefulWidget {
   const Peta({super.key, this.profile, this.chatStore});
@@ -565,174 +566,21 @@ class _PetaState extends State<Peta> {
     ),
   );
 
-  Widget _foodCard(FoodListing food) {
-    final selected = _selectedMerchant == food.merchantName;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: selected ? BagiPorsiColors.mint.withAlpha(110) : Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: selected ? BagiPorsiColors.green : BagiPorsiColors.border,
-          width: selected ? 1.5 : 1,
-        ),
-      ),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Stack(
-                children: [
-                  FoodPhoto(food: food, size: 78, radius: 14),
-                  Positioned(
-                    top: 6,
-                    left: 6,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 7,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: food.isFree
-                            ? BagiPorsiColors.green
-                            : BagiPorsiColors.orange,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        food.isFree ? 'Gratis' : 'Hemat',
-                        style: const TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      food.merchantName,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: BagiPorsiColors.ink,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      food.foodName,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: BagiPorsiColors.muted,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '${food.distance} · Sisa ${_available(food)} porsi',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: BagiPorsiColors.green,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(
-                width: 32,
-                child: IconButton(
-                  tooltip: _profile.isFavorite(food.merchantName)
-                      ? 'Hapus favorit'
-                      : 'Simpan favorit',
-                  padding: EdgeInsets.zero,
-                  onPressed: () => _profile.toggleFavorite(food.merchantName),
-                  icon: Icon(
-                    _profile.isFavorite(food.merchantName)
-                        ? Icons.favorite
-                        : Icons.favorite_border,
-                    color: _profile.isFavorite(food.merchantName)
-                        ? const Color(0xFFE53935)
-                        : BagiPorsiColors.green,
-                    size: 22,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          const Divider(height: 1, color: BagiPorsiColors.border),
-          const SizedBox(height: 10),
-          Wrap(
-            alignment: WrapAlignment.spaceBetween,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              Wrap(
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 6,
-                runSpacing: 4,
-                children: [
-                  Text(
-                    food.discountPrice,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: BagiPorsiColors.green,
-                    ),
-                  ),
-                  Text(
-                    food.originalPrice,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: BagiPorsiColors.muted,
-                      decoration: TextDecoration.lineThrough,
-                    ),
-                  ),
-                ],
-              ),
-              Wrap(
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 4,
-                runSpacing: 8,
-                children: [
-                  IconButton(
-                    tooltip: 'Petunjuk pengambilan',
-                    onPressed: () => _pickupInfo(food),
-                    icon: const Icon(
-                      Icons.directions_outlined,
-                      color: BagiPorsiColors.green,
-                    ),
-                  ),
-                  FilledButton(
-                    onPressed: () => openFoodDetails(context, food),
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      minimumSize: const Size(0, 38),
-                    ),
-                    child: const Text(
-                      'Lihat makanan',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _foodCard(FoodListing food) => FoodCard(
+    merchantName: food.merchantName,
+    foodName: food.foodName,
+    distance: food.distance,
+    portionsLeft: food.portionsLeft,
+    originalPrice: food.originalPrice,
+    discountPrice: food.discountPrice,
+    imageUrl: food.imageUrl,
+    isFree: food.isFree,
+    isFavorite: _profile.isFavorite(food.merchantName),
+    onToggleFavorite: () => _profile.toggleFavorite(food.merchantName),
+    onDirections: () => _pickupInfo(food),
+    selected: _selectedMerchant == food.merchantName,
+    actionLabel: 'Lihat makanan',
+  );
 }
 
 class _PinPointerPainter extends CustomPainter {

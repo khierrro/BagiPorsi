@@ -87,6 +87,7 @@ class _MainNavigationState extends State<MainNavigation> {
 
   @override
   Widget build(BuildContext context) {
+    final activeCount = ClaimScope.maybeOf(context)?.store.active.length ?? 0;
     return Scaffold(
       body: _pages[_selectedIndex],
       bottomNavigationBar: DecoratedBox(
@@ -108,28 +109,38 @@ class _MainNavigationState extends State<MainNavigation> {
             });
           },
           // Tambahkan tab navigasi untuk Chat
-          destinations: const [
-            NavigationDestination(
+          destinations: [
+            const NavigationDestination(
               icon: Icon(Icons.home_outlined),
               selectedIcon: Icon(Icons.home),
               label: 'Beranda',
             ),
-            NavigationDestination(
+            const NavigationDestination(
               icon: Icon(Icons.map_outlined),
               selectedIcon: Icon(Icons.map),
               label: 'Peta',
             ),
             NavigationDestination(
-              icon: Icon(Icons.shopping_bag_outlined),
-              selectedIcon: Icon(Icons.shopping_bag),
+              icon: Badge.count(
+                count: activeCount,
+                isLabelVisible: activeCount > 0,
+                backgroundColor: BagiPorsiColors.green,
+                child: const Icon(Icons.shopping_bag_outlined),
+              ),
+              selectedIcon: Badge.count(
+                count: activeCount,
+                isLabelVisible: activeCount > 0,
+                backgroundColor: BagiPorsiColors.green,
+                child: const Icon(Icons.shopping_bag),
+              ),
               label: 'Klaim',
             ),
-            NavigationDestination(
+            const NavigationDestination(
               icon: Icon(Icons.chat_bubble_outline),
               selectedIcon: Icon(Icons.chat_bubble),
               label: 'Chat',
             ),
-            NavigationDestination(
+            const NavigationDestination(
               icon: Icon(Icons.person_outline),
               selectedIcon: Icon(Icons.person),
               label: 'Profil',

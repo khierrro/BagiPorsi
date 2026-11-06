@@ -20,7 +20,7 @@ const foodCatalog = [
     'Rp 10.000',
     'photo-1604908176997-125f25cc6f3d',
     false,
-    ['Halal', 'Nasi', 'Sarapan', 'Nusantara'],
+    ['Nasi', 'Sarapan', 'Nusantara'],
   ),
   FoodListing(
     'Kebun Segar',
