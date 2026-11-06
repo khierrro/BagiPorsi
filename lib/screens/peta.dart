@@ -251,7 +251,6 @@ class _PetaState extends State<Peta> {
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  // Keep the map and results usable with a keyboard or large text.
                   if (constraints.maxHeight < 260) {
                     return ListView(
                       padding: const EdgeInsets.all(16),
@@ -261,146 +260,154 @@ class _PetaState extends State<Peta> {
                       ],
                     );
                   }
-                  return Stack(
-                    children: [
-                      Positioned.fill(
-                        child: CustomPaint(
-                          painter: const _NeighborhoodPainter(),
-                        ),
-                      ),
-                      const Positioned(
-                        top: 12,
-                        left: 16,
-                        child: InfoPill(
-                          'Peta ilustrasi · toko contoh',
-                          icon: Icons.info_outline,
-                          color: Color(0xFF597168),
-                          background: Colors.white,
-                        ),
-                      ),
-                      for (final food in foods)
+                  return ClipRect(
+                    child: Stack(
+                      children: [
                         Positioned.fill(
-                          bottom: constraints.maxHeight * .30,
-                          child: Align(
-                            alignment: _positions[foodCatalog.indexOf(food)],
-                            child: Semantics(
-                              button: true,
-                              label:
-                                  'Pilih ${food.merchantName}, ${food.discountPrice}',
-                              child: GestureDetector(
-                                onTap: () => _select(food),
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 180),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 9,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color:
-                                        _selectedMerchant == food.merchantName
-                                        ? BagiPorsiColors.green
-                                        : Colors.white,
-                                    borderRadius: BorderRadius.circular(24),
-                                    border: Border.all(
-                                      color: BagiPorsiColors.green,
-                                      width:
-                                          _selectedMerchant == food.merchantName
-                                          ? 2
-                                          : 1,
+                          child: CustomPaint(
+                            painter: const _NeighborhoodPainter(),
+                          ),
+                        ),
+                        const Positioned(
+                          top: 12,
+                          left: 16,
+                          child: InfoPill(
+                            'Peta ilustrasi · toko contoh',
+                            icon: Icons.info_outline,
+                            color: Color(0xFF597168),
+                            background: Colors.white,
+                          ),
+                        ),
+                        for (final food in foods)
+                          Positioned.fill(
+                            bottom: constraints.maxHeight * .30,
+                            child: Align(
+                              alignment: _positions[foodCatalog.indexOf(food)],
+                              child: Semantics(
+                                button: true,
+                                label:
+                                    'Pilih ${food.merchantName}, ${food.discountPrice}',
+                                child: GestureDetector(
+                                  onTap: () => _select(food),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 180),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 9,
                                     ),
-                                    boxShadow: const [
-                                      BoxShadow(
-                                        color: Color(0x20183C32),
-                                        blurRadius: 10,
-                                        offset: Offset(0, 4),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        food.isFree
-                                            ? Icons.volunteer_activism
-                                            : Icons.restaurant,
-                                        size: 14,
-                                        color:
+                                    decoration: BoxDecoration(
+                                      color:
+                                          _selectedMerchant == food.merchantName
+                                          ? BagiPorsiColors.green
+                                          : Colors.white,
+                                      borderRadius: BorderRadius.circular(24),
+                                      border: Border.all(
+                                        color: BagiPorsiColors.green,
+                                        width:
                                             _selectedMerchant ==
                                                 food.merchantName
-                                            ? Colors.white
-                                            : BagiPorsiColors.green,
+                                            ? 2
+                                            : 1,
                                       ),
-                                      const SizedBox(width: 5),
-                                      Text(
-                                        food.discountPrice,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w800,
+                                      boxShadow: const [
+                                        BoxShadow(
+                                          color: Color(0x20183C32),
+                                          blurRadius: 10,
+                                          offset: Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          food.isFree
+                                              ? Icons.volunteer_activism
+                                              : Icons.restaurant,
+                                          size: 14,
                                           color:
                                               _selectedMerchant ==
                                                   food.merchantName
                                               ? Colors.white
                                               : BagiPorsiColors.green,
                                         ),
-                                      ),
-                                    ],
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          food.discountPrice,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w800,
+                                            color:
+                                                _selectedMerchant ==
+                                                    food.merchantName
+                                                ? Colors.white
+                                                : BagiPorsiColors.green,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                      DraggableScrollableSheet(
-                        controller: _sheet,
-                        initialChildSize: .48,
-                        minChildSize: .25,
-                        maxChildSize: .88,
-                        builder: (context, scrollController) => Container(
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            border: Border(
-                              top: BorderSide(color: BagiPorsiColors.border),
+                        DraggableScrollableSheet(
+                          controller: _sheet,
+                          initialChildSize: .48,
+                          minChildSize: .25,
+                          maxChildSize: .88,
+                          builder: (context, scrollController) => Container(
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              border: Border(
+                                top: BorderSide(color: BagiPorsiColors.border),
+                              ),
                             ),
-                          ),
-                          child: ListView(
-                            controller: scrollController,
-                            padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
-                            children: [
-                              Center(
-                                child: Container(
-                                  width: 36,
-                                  height: 4,
-                                  decoration: BoxDecoration(
-                                    color: BagiPorsiColors.border,
-                                    borderRadius: BorderRadius.circular(4),
+                            child: ListView(
+                              controller: scrollController,
+                              padding: const EdgeInsets.fromLTRB(
+                                16,
+                                10,
+                                16,
+                                24,
+                              ),
+                              children: [
+                                Center(
+                                  child: Container(
+                                    width: 36,
+                                    height: 4,
+                                    decoration: BoxDecoration(
+                                      color: BagiPorsiColors.border,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(height: 14),
-                              Text(
-                                '${foods.length} pilihan untuk diselamatkan',
-                                style: const TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w800,
-                                  color: BagiPorsiColors.ink,
+                                const SizedBox(height: 14),
+                                Text(
+                                  '${foods.length} pilihan untuk diselamatkan',
+                                  style: const TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w800,
+                                    color: BagiPorsiColors.ink,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              const Text(
-                                'Tarik ke atas untuk melihat semua makanan',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: BagiPorsiColors.muted,
+                                const SizedBox(height: 4),
+                                const Text(
+                                  'Tarik ke atas untuk melihat semua makanan',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: BagiPorsiColors.muted,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 16),
-                              if (foods.isEmpty) _empty(),
-                              for (final food in foods) _foodCard(food),
-                            ],
+                                const SizedBox(height: 16),
+                                if (foods.isEmpty) _empty(),
+                                for (final food in foods) _foodCard(food),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   );
                 },
               ),
