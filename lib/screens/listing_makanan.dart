@@ -7,6 +7,7 @@ import '../data/food_catalog.dart';
 import '../data/user_profile_store.dart';
 import '../design/bagi_porsi_theme.dart';
 import '../widgets/home_quick_actions.dart';
+import '../widgets/app_search_bar.dart';
 import '../widgets/claim_scope.dart';
 import 'detail_makanan.dart';
 import 'klaim_saya.dart';
@@ -359,40 +360,13 @@ class _ListingMakananState extends State<ListingMakanan> {
     );
   }
 
-  Widget _buildNavbarSearch(String query) {
-    final border = OutlineInputBorder(
-      borderRadius: BorderRadius.circular(18),
-      borderSide: BorderSide.none,
-    );
-    return TextField(
-      controller: _searchController,
-      onChanged: (_) => setState(() {}),
-      textInputAction: TextInputAction.search,
-      style: const TextStyle(color: _ink, fontSize: 16),
-      cursorColor: _green,
-      decoration: InputDecoration(
-        hintText: 'Cari makanan atau toko...',
-        hintStyle: const TextStyle(color: Color(0xFF858D89), fontSize: 14),
-        prefixIcon: const Icon(Icons.search, color: Color(0xFF4B5550)),
-        suffixIcon: query.isEmpty
-            ? null
-            : IconButton(
-                tooltip: 'Hapus pencarian',
-                icon: const Icon(Icons.close, color: Color(0xFF4B5550)),
-                onPressed: () => setState(_searchController.clear),
-              ),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(vertical: 16),
-        border: border,
-        enabledBorder: border,
-        focusedBorder: border.copyWith(
-          borderSide: const BorderSide(color: Color(0xFFB5D7CB)),
-        ),
-      ),
-    );
-  }
-
+  Widget _buildNavbarSearch(String query) => AppSearchBar(
+    controller: _searchController,
+    hintText: 'Cari makanan atau toko...',
+    clearTooltip: 'Hapus pencarian',
+    onChanged: (_) => setState(() {}),
+    onClear: () => setState(() {}),
+  );
   Widget _buildHeader() {
     return Stack(
       key: _greenAreaKey,
