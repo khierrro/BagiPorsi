@@ -298,15 +298,16 @@ class _PetaState extends State<Peta> {
                                     decoration: BoxDecoration(
                                       color:
                                           _selectedMerchant == food.merchantName
-                                              ? BagiPorsiColors.green
-                                              : Colors.white,
+                                          ? BagiPorsiColors.green
+                                          : Colors.white,
                                       borderRadius: BorderRadius.circular(24),
                                       border: Border.all(
                                         color: BagiPorsiColors.green,
                                         width:
-                                            _selectedMerchant == food.merchantName
-                                                ? 2
-                                                : 1,
+                                            _selectedMerchant ==
+                                                food.merchantName
+                                            ? 2
+                                            : 1,
                                       ),
                                       boxShadow: const [
                                         BoxShadow(
@@ -326,9 +327,9 @@ class _PetaState extends State<Peta> {
                                           size: 14,
                                           color:
                                               _selectedMerchant ==
-                                                      food.merchantName
-                                                  ? Colors.white
-                                                  : BagiPorsiColors.green,
+                                                  food.merchantName
+                                              ? Colors.white
+                                              : BagiPorsiColors.green,
                                         ),
                                         const SizedBox(width: 5),
                                         Text(
@@ -338,9 +339,9 @@ class _PetaState extends State<Peta> {
                                             fontWeight: FontWeight.w800,
                                             color:
                                                 _selectedMerchant ==
-                                                        food.merchantName
-                                                    ? Colors.white
-                                                    : BagiPorsiColors.green,
+                                                    food.merchantName
+                                                ? Colors.white
+                                                : BagiPorsiColors.green,
                                           ),
                                         ),
                                       ],
@@ -364,7 +365,12 @@ class _PetaState extends State<Peta> {
                             ),
                             child: ListView(
                               controller: scrollController,
-                              padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
+                              padding: const EdgeInsets.fromLTRB(
+                                16,
+                                10,
+                                16,
+                                24,
+                              ),
                               children: [
                                 Center(
                                   child: Container(
