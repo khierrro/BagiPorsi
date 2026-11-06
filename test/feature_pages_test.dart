@@ -89,6 +89,20 @@ void main() {
     await tester.tap(find.byTooltip('Kembali'));
     await tester.pumpAndSettle();
     expect(find.text('Rani'), findsOneWidget);
+    expect(find.text('Notifikasi'), findsNothing);
+
+    await tester.scrollUntilVisible(
+      find.text('Poin kamu').hitTestable(),
+      100,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Poin kamu'));
+    await tester.pumpAndSettle();
+    expect(find.text('Poin Kamu'), findsOneWidget);
+    expect(find.text('Tingkatan Level Kebaikan'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
     await tester.scrollUntilVisible(
       find.text('Lokasi tersimpan').hitTestable(),
       200,
@@ -121,19 +135,6 @@ void main() {
     expect(profile.location, 'Coblong, Bandung');
 
     await tester.tap(find.byTooltip('Tutup'));
-    await tester.pumpAndSettle();
-    expect(find.text('Notifikasi'), findsNothing);
-
-    await tester.scrollUntilVisible(
-      find.text('Poin kamu').hitTestable(),
-      100,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.tap(find.text('Poin kamu'));
-    await tester.pumpAndSettle();
-    expect(find.text('Poin Kamu'), findsOneWidget);
-    expect(find.text('Tingkatan Level Kebaikan'), findsOneWidget);
-    await tester.pageBack();
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
