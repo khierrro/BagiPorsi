@@ -5,6 +5,7 @@ import '../data/user_profile_store.dart';
 import '../design/bagi_porsi_theme.dart';
 import '../widgets/feature_widgets.dart';
 import '../widgets/home_quick_actions.dart';
+import 'klaim_saya.dart';
 
 class Profil extends StatefulWidget {
   const Profil({super.key, this.profile});
@@ -147,300 +148,462 @@ class _ProfilState extends State<Profil> {
     );
   }
 
+  void _showPoints() => showFeatureSheet(
+    context,
+    title: 'Poin kamu',
+    icon: Icons.stars_rounded,
+    message: '0 poin terkumpul. Belum ada aktivitas poin untuk ditampilkan.',
+  );
+
+  void _showHistory() => openClaims(context, history: true);
+
+  void _showImpact() => showFeatureSheet(
+    context,
+    title: 'Dampak baikmu',
+    icon: Icons.eco_outlined,
+    message: 'Setiap porsi berarti. Porsi pertamamu akan menjadi awal dampak baik di sini.',
+    content: const Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: _ImpactStat(
+            value: '0',
+            label: 'Porsi diselamatkan',
+            icon: Icons.restaurant_rounded,
+          ),
+        ),
+        SizedBox(width: 20),
+        Expanded(
+          child: _ImpactStat(
+            value: 'Rp0',
+            label: 'Total penghematan',
+            icon: Icons.savings_outlined,
+          ),
+        ),
+      ],
+    ),
+  );
+
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: _profile,
     builder: (context, child) => Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: BagiPorsiColors.mint,
         foregroundColor: BagiPorsiColors.ink,
         surfaceTintColor: Colors.transparent,
         title: const Text(
           'Profil Saya',
-          style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
         ),
-        actions: [
-          IconButton(
-            tooltip: 'Edit profil',
-            onPressed: _editName,
-            icon: const Icon(Icons.edit_outlined),
-          ),
-        ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 32,
-                  backgroundColor: BagiPorsiColors.mint,
-                  child: Text(
-                    _profile.name.characters.first.toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                      color: BagiPorsiColors.green,
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 720),
+          child: ListView(
+            padding: const EdgeInsets.only(bottom: 28),
+            children: [
+              Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [BagiPorsiColors.mint, BagiPorsiColors.canvas],
+                    stops: [0, .45],
+                  ),
+                ),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                child: Column(
+                  children: [
+                    _identityCard(),
+                    const SizedBox(height: 16),
+                    _shortcutPair(
+                      _ProfileShortcut(
+                        icon: Icons.volunteer_activism_outlined,
+                        title: 'Dampak baikmu',
+                        subtitle: '0 porsi diselamatkan',
+                        featured: true,
+                        onTap: _showImpact,
+                      ),
+                      _ProfileShortcut(
+                        icon: Icons.add_location_alt_outlined,
+                        title: 'Lokasi pengambilan',
+                        subtitle: _profile.location ?? 'Atur lokasi terdekatmu',
+                        onTap: () => chooseUserLocation(context, _profile),
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 12),
+                    _shortcutPair(
+                      _ProfileShortcut(
+                        icon: Icons.favorite_rounded,
+                        title: 'Restoran favorit',
+                        subtitle: '${_profile.favorites.length} tersimpan',
+                        compact: true,
+                        onTap: _showFavorites,
+                      ),
+                      _ProfileShortcut(
+                        icon: Icons.receipt_long_outlined,
+                        title: 'Riwayat pengambilan',
+                        subtitle: 'Lihat aktivitasmu',
+                        compact: true,
+                        onTap: _showHistory,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Halo,',
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _groupTitle('Lebih banyak kebaikan'),
+                    _menu('Poin kamu', detail: '0 poin', onTap: _showPoints),
+                    _menu(
+                      'Dampak baikmu',
+                      detail: '0 porsi',
+                      onTap: _showImpact,
+                    ),
+                    _groupTitle('Umum'),
+                    _menu('Klaim Saya', onTap: () => openClaims(context)),
+                    _menu('Restoran favorit', onTap: _showFavorites),
+                    _menu('Riwayat pengambilan', onTap: _showHistory),
+                    _menu(
+                      'Lokasi tersimpan',
+                      subtitle: _profile.location,
+                      onTap: () => chooseUserLocation(context, _profile),
+                    ),
+                    _menu(
+                      'Notifikasi',
+                      detail: _profile.notificationsEnabled
+                          ? 'Aktif'
+                          : 'Nonaktif',
+                      onTap: _notificationSettings,
+                    ),
+                    _groupTitle('Bantuan'),
+                    _menu('Pusat bantuan', onTap: _help),
+                    _menu(
+                      'Tentang BagiPorsi',
+                      onTap: () => showFeatureSheet(
+                        context,
+                        title: 'Porsi baik untuk semua',
+                        icon: Icons.volunteer_activism_outlined,
+                        message: 'BagiPorsi mempertemukan makanan yang masih tersedia dengan orang yang membutuhkannya. Temukan porsi gratis atau harga hemat, lalu koordinasikan pengambilan dengan toko.',
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    const Center(
+                      child: Text(
+                        'BagiPorsi · Setiap porsi berarti',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           color: BagiPorsiColors.muted,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _profile.name,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          color: BagiPorsiColors.ink,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      const Text(
-                        'Setiap porsi berarti.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: BagiPorsiColors.muted,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          const Divider(height: 1, color: BagiPorsiColors.border),
-          ListTile(
-            contentPadding: const EdgeInsets.symmetric(vertical: 10),
-            leading: const Icon(
-              Icons.stars_rounded,
-              color: BagiPorsiColors.green,
-              size: 30,
-            ),
-            title: const Text(
-              'Poin kamu',
-              style: TextStyle(fontSize: 13, color: BagiPorsiColors.muted),
-            ),
-            subtitle: const Text(
-              '0 poin',
-              style: TextStyle(
-                fontSize: 23,
-                fontWeight: FontWeight.w800,
-                color: BagiPorsiColors.green,
               ),
-            ),
-            trailing: const Icon(
-              Icons.chevron_right,
-              color: BagiPorsiColors.muted,
-            ),
-            onTap: () => showFeatureSheet(
-              context,
-              title: 'Poin kamu',
-              icon: Icons.stars_rounded,
-              message: '0 poin terkumpul. Belum ada aktivitas poin untuk ditampilkan.',
-            ),
+            ],
           ),
-          const Divider(height: 1, color: BagiPorsiColors.border),
-          _groupTitle('Dampak baikmu'),
-          const Text(
-            'Langkah kecilmu, berarti untuk bumi.',
-            style: TextStyle(fontSize: 12, color: BagiPorsiColors.muted),
-          ),
-          const SizedBox(height: 20),
-          const IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: _ImpactStat(
-                    value: '0',
-                    label: 'Porsi diselamatkan',
-                    icon: Icons.restaurant_rounded,
-                  ),
-                ),
-                VerticalDivider(
-                  width: 32,
-                  thickness: 1,
-                  color: BagiPorsiColors.border,
-                ),
-                Expanded(
-                  child: _ImpactStat(
-                    value: 'Rp0',
-                    label: 'Total penghematan',
-                    icon: Icons.savings_outlined,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          const Divider(height: 1, color: BagiPorsiColors.border),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 18),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  Icons.eco_outlined,
-                  color: BagiPorsiColors.green,
-                  size: 24,
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Mulai langkah baikmu',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: BagiPorsiColors.ink,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Porsi pertamamu akan menjadi awal dampak baik di sini.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          height: 1.5,
-                          color: BagiPorsiColors.muted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1, color: BagiPorsiColors.border),
-          _groupTitle('Aktivitas'),
-          _menuGroup([
-            _menu(
-              Icons.receipt_long_outlined,
-              'Riwayat pengambilan',
-              subtitle: 'Lihat perjalanan porsi baikmu',
-              onTap: () => showFeatureSheet(
-                context,
-                title: 'Riwayat pengambilan',
-                icon: Icons.receipt_long_outlined,
-                message: 'Belum ada pengambilan. Jelajahi Beranda atau Peta untuk menemukan makanan pilihanmu.',
-              ),
-            ),
-            _menu(
-              Icons.favorite_border_rounded,
-              'Restoran favorit',
-              subtitle: '${_profile.favorites.length} restoran tersimpan',
-              onTap: _showFavorites,
-            ),
-          ]),
-          _groupTitle('Preferensi'),
-          _menuGroup([
-            _menu(
-              Icons.location_on_outlined,
-              'Lokasi tersimpan',
-              subtitle: _profile.location ?? 'Atur area pengambilanmu',
-              onTap: () => chooseUserLocation(context, _profile),
-            ),
-            _menu(
-              Icons.notifications_none_rounded,
-              'Notifikasi',
-              subtitle: _profile.notificationsEnabled
-                  ? 'Pengingat diaktifkan'
-                  : 'Pengingat dinonaktifkan',
-              onTap: _notificationSettings,
-            ),
-          ]),
-          _groupTitle('Bantuan'),
-          _menuGroup([
-            _menu(Icons.help_outline_rounded, 'Pusat bantuan', onTap: _help),
-            _menu(
-              Icons.volunteer_activism_outlined,
-              'Tentang BagiPorsi',
-              onTap: () => showFeatureSheet(
-                context,
-                title: 'Porsi baik untuk semua',
-                icon: Icons.volunteer_activism_outlined,
-                message: 'BagiPorsi mempertemukan makanan yang masih tersedia dengan orang yang membutuhkannya. Temukan porsi gratis atau harga hemat, lalu koordinasikan pengambilan dengan toko.',
-              ),
-            ),
-          ]),
-          const SizedBox(height: 24),
-          const Text(
-            'BagiPorsi · Setiap porsi berarti',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 11, color: BagiPorsiColors.muted),
-          ),
-        ],
+        ),
       ),
     ),
   );
 
+  Widget _identityCard() => Container(
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x08000000),
+          blurRadius: 14,
+          offset: Offset(0, 4),
+        ),
+      ],
+    ),
+    padding: const EdgeInsets.all(16),
+    child: Column(
+      children: [
+        Row(
+          children: [
+            CircleAvatar(
+              radius: 23,
+              backgroundColor: BagiPorsiColors.green,
+              child: Text(
+                _profile.name.characters.first.toUpperCase(),
+                style: const TextStyle(
+                  fontSize: 23,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                _profile.name,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: BagiPorsiColors.ink,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Tooltip(
+              message: 'Edit profil',
+              child: TextButton(
+                onPressed: _editName,
+                style: TextButton.styleFrom(
+                  backgroundColor: BagiPorsiColors.mint,
+                  foregroundColor: BagiPorsiColors.ink,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                ),
+                child: const Text('Profil', style: TextStyle(fontSize: 12)),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _identityBadge(
+                Icons.eco_outlined,
+                'Setiap porsi berarti',
+                _showImpact,
+              ),
+              const SizedBox(width: 8),
+              _identityBadge(
+                Icons.stars_rounded,
+                '0 poin terkumpul',
+                _showPoints,
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _identityBadge(IconData icon, String label, VoidCallback onTap) =>
+      Material(
+        color: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30),
+          side: const BorderSide(color: BagiPorsiColors.border),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 15, color: BagiPorsiColors.green),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: BagiPorsiColors.ink,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+  Widget _shortcutPair(Widget first, Widget second) => LayoutBuilder(
+    builder: (context, constraints) {
+      final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
+      if (constraints.maxWidth / scale < 250) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [first, const SizedBox(height: 12), second],
+        );
+      }
+      return IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(child: first),
+            const SizedBox(width: 12),
+            Expanded(child: second),
+          ],
+        ),
+      );
+    },
+  );
+
   Widget _groupTitle(String label) => Padding(
-    padding: const EdgeInsets.only(top: 24, bottom: 12),
+    padding: const EdgeInsets.only(top: 26, bottom: 12),
     child: Text(
       label,
       style: const TextStyle(
         fontSize: 16,
-        fontWeight: FontWeight.w800,
+        fontWeight: FontWeight.w700,
         color: BagiPorsiColors.ink,
       ),
     ),
-  );
-
-  Widget _menuGroup(List<Widget> children) => Column(
-    children: [
-      for (final child in children) ...[
-        child,
-        const Divider(height: 1, color: BagiPorsiColors.border),
-      ],
-    ],
   );
 
   Widget _menu(
-    IconData icon,
     String title, {
     String? subtitle,
+    String? detail,
     required VoidCallback onTap,
-  }) => ListTile(
-    contentPadding: const EdgeInsets.symmetric(vertical: 8),
-    leading: Icon(icon, size: 23, color: BagiPorsiColors.green),
-    title: Text(
-      title,
-      style: const TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        color: BagiPorsiColors.ink,
+  }) => Column(
+    children: [
+      ListTile(
+        contentPadding: EdgeInsets.zero,
+        minVerticalPadding: 12,
+        title: Text(
+          title,
+          style: const TextStyle(fontSize: 14, color: BagiPorsiColors.ink),
+        ),
+        subtitle: subtitle == null
+            ? null
+            : Text(
+                subtitle,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: BagiPorsiColors.muted,
+                ),
+              ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (detail != null) ...[
+              Text(
+                detail,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: BagiPorsiColors.muted,
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
+            const Icon(
+              Icons.chevron_right,
+              size: 19,
+              color: BagiPorsiColors.muted,
+            ),
+          ],
+        ),
+        onTap: onTap,
       ),
-    ),
-    subtitle: subtitle == null
-        ? null
-        : Text(
-            subtitle,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 11, color: BagiPorsiColors.muted),
-          ),
-    trailing: const Icon(
-      Icons.chevron_right,
-      size: 19,
-      color: BagiPorsiColors.muted,
-    ),
-    onTap: onTap,
+      const Divider(height: 1, color: BagiPorsiColors.border),
+    ],
   );
+}
+
+class _ProfileShortcut extends StatelessWidget {
+  const _ProfileShortcut({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    this.featured = false,
+    this.compact = false,
+  });
+  final IconData icon;
+  final String title, subtitle;
+  final VoidCallback onTap;
+  final bool featured, compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = featured ? Colors.white : BagiPorsiColors.ink;
+    return Material(
+      color: featured ? BagiPorsiColors.green : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(17),
+        side: BorderSide(
+          color: featured || compact
+              ? Colors.transparent
+              : BagiPorsiColors.border,
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Stack(
+          children: [
+            if (featured)
+              Positioned(
+                top: -58,
+                right: -20,
+                child: Container(
+                  width: 190,
+                  height: 110,
+                  decoration: const BoxDecoration(
+                    color: Color(0x22D2EF94),
+                    borderRadius: BorderRadius.all(Radius.elliptical(100, 60)),
+                  ),
+                ),
+              ),
+            Padding(
+              padding: EdgeInsets.all(compact ? 12 : 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (!compact) ...[
+                    CircleAvatar(
+                      radius: 17,
+                      backgroundColor: featured
+                          ? BagiPorsiColors.lime
+                          : BagiPorsiColors.mint,
+                      child: Icon(icon, size: 21, color: BagiPorsiColors.green),
+                    ),
+                    const SizedBox(height: 22),
+                  ],
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: compact ? 12 : 14,
+                            fontWeight: FontWeight.w600,
+                            color: foreground,
+                          ),
+                        ),
+                      ),
+                      if (compact) ...[
+                        const SizedBox(width: 6),
+                        Icon(icon, size: 22, color: BagiPorsiColors.green),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: compact ? 11 : 12,
+                      height: 1.4,
+                      color: featured
+                          ? const Color(0xFFD2EAE2)
+                          : BagiPorsiColors.muted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _ImpactStat extends StatelessWidget {

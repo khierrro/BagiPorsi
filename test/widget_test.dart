@@ -23,7 +23,7 @@ void main() {
 
     expect(find.byType(ListingMakanan), findsOneWidget);
     expect(find.text('Porsi baik, harga lebih hemat.'), findsOneWidget);
-    expect(find.byType(NavigationDestination), findsNWidgets(4));
+    expect(find.byType(NavigationDestination), findsNWidgets(5));
     await tester.drag(find.byType(CustomScrollView), const Offset(0, -300));
     await tester.pumpAndSettle();
     // Widget tests return HTTP 400, exercising the offline image fallback.

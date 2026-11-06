@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../design/bagi_porsi_theme.dart';
+import '../data/claim_store.dart';
+import '../data/food_catalog.dart';
+import '../widgets/claim_scope.dart';
+import 'klaim_saya.dart';
 
 class DetailMakanan extends StatefulWidget {
   const DetailMakanan({
@@ -27,6 +31,75 @@ class DetailMakanan extends StatefulWidget {
 
 class _DetailMakananState extends State<DetailMakanan> {
   late int _quantity;
+  ClaimStore? _claims;
+  bool _ownsClaims = false;
+  FoodListing get _food => FoodListing(
+    widget.merchantName,
+    widget.foodName,
+    widget.distance,
+    widget.portionsLeft,
+    widget.originalPrice,
+    widget.discountPrice,
+    widget.imageUrl,
+    widget.isFree,
+    const [],
+  );
+  int get _available => _claims?.available(_food) ?? widget.portionsLeft;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_claims == null) {
+      _claims = ClaimScope.maybeOf(context)?.store;
+      _ownsClaims = _claims == null;
+      _claims ??= ClaimStore();
+      _claims!.addListener(_claimsChanged);
+    }
+    if (_quantity > _available) _quantity = _available;
+  }
+
+  void _claimsChanged() {
+    if (!mounted) return;
+    setState(() {
+      if (_quantity > _available) _quantity = _available;
+      if (_quantity == 0 && _available > 0) _quantity = 1;
+    });
+  }
+
+  @override
+  void dispose() {
+    _claims?.removeListener(_claimsChanged);
+    if (_ownsClaims) _claims?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _confirmClaim(BuildContext sheetContext) async {
+    try {
+      await _claims!.create(_food, _quantity);
+      if (!mounted || !sheetContext.mounted) return;
+      Navigator.pop(sheetContext);
+      final openTab = ClaimScope.maybeOf(context)?.onOpenClaims;
+      if (openTab != null) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        openTab();
+        return;
+      }
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute(builder: (_) => KlaimSaya(store: _claims)),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            error is StateError
+                ? error.message.toString()
+                : 'Klaim belum tersimpan. Coba lagi.',
+          ),
+        ),
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -58,34 +131,72 @@ class _DetailMakananState extends State<DetailMakanan> {
         top: false,
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text('Ringkasan pengambilan', style: _sectionTitle),
-              const SizedBox(height: 20),
-              Text(widget.foodName, style: _sectionTitle),
-              const SizedBox(height: 6),
-              Text(widget.merchantName, style: _bodyStyle),
-              const SizedBox(height: 20),
-              _SummaryRow(label: 'Jumlah porsi', value: '$_quantity porsi'),
-              const SizedBox(height: 12),
-              _SummaryRow(
-                label: 'Harga per porsi',
-                value: widget.discountPrice,
-              ),
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Divider(color: BagiPorsiColors.border),
-              ),
-              _SummaryRow(label: 'Total', value: _total, emphasis: true),
-              const SizedBox(height: 20),
-              const _PickupNote(),
-              const SizedBox(height: 20),
-              OutlinedButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Kembali ke detail'),
-              ),
-            ],
+          child: ListenableBuilder(
+            listenable: _claims!,
+            builder: (context, _) => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text('Ringkasan pengambilan', style: _sectionTitle),
+                const SizedBox(height: 20),
+                Text(widget.foodName, style: _sectionTitle),
+                const SizedBox(height: 6),
+                Text(widget.merchantName, style: _bodyStyle),
+                const SizedBox(height: 20),
+                _SummaryRow(label: 'Jumlah porsi', value: '$_quantity porsi'),
+                const SizedBox(height: 12),
+                _SummaryRow(
+                  label: 'Harga per porsi',
+                  value: widget.discountPrice,
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Divider(color: BagiPorsiColors.border),
+                ),
+                _SummaryRow(label: 'Total', value: _total, emphasis: true),
+                const SizedBox(height: 12),
+                _SummaryRow(
+                  label: 'Pembayaran',
+                  value: widget.isFree
+                      ? 'Tanpa pembayaran'
+                      : 'Tunai saat ambil',
+                ),
+                const SizedBox(height: 20),
+                const _PickupNote(),
+                const SizedBox(height: 16),
+                const Text(
+                  'Klaim demo disimpan di perangkat ini, belum dikirim ke penjual. Kode berlaku 2 jam untuk simulasi.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.5,
+                    color: BagiPorsiColors.muted,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                if (_claims!.error != null) ...[
+                  Text(
+                    _claims!.error!,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                  TextButton(
+                    onPressed: _claims!.busy ? null : _claims!.load,
+                    child: const Text('Coba muat ulang'),
+                  ),
+                ],
+                FilledButton(
+                  onPressed: _claims!.busy || !_claims!.loaded || _quantity <= 0
+                      ? null
+                      : () => _confirmClaim(context),
+                  child: Text(
+                    _claims!.busy ? 'Menyimpan klaim…' : 'Konfirmasi klaim',
+                  ),
+                ),
+                const SizedBox(height: 20),
+                OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Kembali ke detail'),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -224,7 +335,9 @@ class _DetailMakananState extends State<DetailMakanan> {
                     ),
                     const SizedBox(height: 12),
                     FilledButton(
-                      onPressed: _quantity > 0 ? _showSummary : null,
+                      onPressed: _quantity > 0 && !(_claims?.busy ?? false)
+                          ? _showSummary
+                          : null,
                       style: FilledButton.styleFrom(
                         backgroundColor: BagiPorsiColors.green,
                         foregroundColor: Colors.white,
@@ -341,7 +454,7 @@ class _DetailMakananState extends State<DetailMakanan> {
       children: [
         const Text('Mau ambil berapa porsi?', style: _sectionTitle),
         const SizedBox(height: 4),
-        Text('${widget.portionsLeft} porsi tersedia', style: _bodyStyle),
+        Text('$_available porsi tersedia', style: _bodyStyle),
         const SizedBox(height: 12),
         Row(
           mainAxisSize: MainAxisSize.min,
@@ -363,7 +476,7 @@ class _DetailMakananState extends State<DetailMakanan> {
             ),
             IconButton.filledTonal(
               tooltip: 'Tambah porsi',
-              onPressed: _quantity < widget.portionsLeft
+              onPressed: _quantity < _available
                   ? () => setState(() => _quantity++)
                   : null,
               icon: const Icon(Icons.add_rounded),

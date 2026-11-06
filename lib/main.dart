@@ -1,33 +1,62 @@
 import 'package:flutter/material.dart';
 
 import 'data/chat_store.dart';
+import 'data/claim_store.dart';
 import 'data/user_profile_store.dart';
 import 'design/bagi_porsi_theme.dart';
 import 'screens/listing_makanan.dart';
 import 'screens/peta.dart';
 import 'screens/pilih_restoran.dart';
 import 'screens/profil.dart';
+import 'screens/klaim_saya.dart';
+import 'widgets/claim_scope.dart';
 
-void main() {
-  runApp(const BagiPorsiApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final claims = ClaimStore(storage: DeviceClaimStorage());
+  await claims.load();
+  runApp(BagiPorsiApp(claims: claims));
 }
 
-class BagiPorsiApp extends StatelessWidget {
-  const BagiPorsiApp({super.key});
+class BagiPorsiApp extends StatefulWidget {
+  const BagiPorsiApp({super.key, this.claims});
+  final ClaimStore? claims;
+
+  @override
+  State<BagiPorsiApp> createState() => _BagiPorsiAppState();
+}
+
+class _BagiPorsiAppState extends State<BagiPorsiApp> {
+  final _navigationKey = GlobalKey<_MainNavigationState>();
+  late final _claims = widget.claims ?? ClaimStore();
+  final _chatStore = ChatStore();
+
+  @override
+  void dispose() {
+    if (widget.claims == null) _claims.dispose();
+    _chatStore.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'BagiPorsi',
-      debugShowCheckedModeBanner: false,
-      theme: BagiPorsiTheme.data,
-      home: const MainNavigation(),
+    return ClaimScope(
+      store: _claims,
+      chatStore: _chatStore,
+      onOpenClaims: () => _navigationKey.currentState?.showClaims(),
+      child: MaterialApp(
+        title: 'BagiPorsi',
+        debugShowCheckedModeBanner: false,
+        theme: BagiPorsiTheme.data,
+        home: MainNavigation(key: _navigationKey, chatStore: _chatStore),
+      ),
     );
   }
 }
 
 class MainNavigation extends StatefulWidget {
-  const MainNavigation({super.key});
+  const MainNavigation({super.key, this.chatStore});
+  final ChatStore? chatStore;
 
   @override
   State<MainNavigation> createState() => _MainNavigationState();
@@ -36,19 +65,22 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
 
-  final _chatStore = ChatStore();
+  void showClaims() => setState(() => _selectedIndex = 2);
+
+  late final _chatStore = widget.chatStore ?? ChatStore();
   final _profile = UserProfileStore();
 
   late final List<Widget> _pages = [
     ListingMakanan(profile: _profile),
     Peta(profile: _profile, chatStore: _chatStore),
+    const KlaimSaya(embedded: true),
     PilihRestoran(store: _chatStore),
     Profil(profile: _profile),
   ];
 
   @override
   void dispose() {
-    _chatStore.dispose();
+    if (widget.chatStore == null) _chatStore.dispose();
     _profile.dispose();
     super.dispose();
   }
@@ -86,6 +118,11 @@ class _MainNavigationState extends State<MainNavigation> {
               icon: Icon(Icons.map_outlined),
               selectedIcon: Icon(Icons.map),
               label: 'Peta',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.shopping_bag_outlined),
+              selectedIcon: Icon(Icons.shopping_bag),
+              label: 'Klaim',
             ),
             NavigationDestination(
               icon: Icon(Icons.chat_bubble_outline),

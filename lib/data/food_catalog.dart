@@ -69,6 +69,7 @@ class FoodListing {
   final bool isFree;
   final List<String> categories;
 
-  String get imageUrl =>
-      'https://images.unsplash.com/$photo?auto=format&fit=crop&w=600&q=80';
+  String get imageUrl => photo.startsWith('https://')
+      ? photo
+      : 'https://images.unsplash.com/$photo?auto=format&fit=crop&w=600&q=80';
 }

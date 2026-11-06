@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../design/bagi_porsi_theme.dart';
 import '../data/user_profile_store.dart';
+import 'claim_scope.dart';
 
 Future<void> chooseUserLocation(
   BuildContext context,
@@ -94,6 +95,7 @@ class _HomeQuickActionsState extends State<HomeQuickActions> {
 
   @override
   Widget build(BuildContext context) {
+    final latest = ClaimScope.maybeOf(context)?.store.latest;
     final extraHeight =
         (MediaQuery.textScalerOf(context).scale(14) - 14).clamp(0.0, 28.0) * 3;
     return ListenableBuilder(
@@ -115,7 +117,7 @@ class _HomeQuickActionsState extends State<HomeQuickActions> {
             const SizedBox(width: 12),
             _QuickAction(
               title: 'Pembelian terakhir',
-              value: 'Belum ada pembelian',
+              value: latest?.food.foodName ?? 'Belum ada pembelian',
               detail: 'Lihat riwayatmu',
               icon: Icons.receipt_long_outlined,
               width: 208,

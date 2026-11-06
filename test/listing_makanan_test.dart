@@ -245,8 +245,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Riwayat transaksi'));
     await tester.pumpAndSettle();
-    expect(find.text('Belum ada riwayat transaksi'), findsOneWidget);
-    await tester.tap(find.text('Tutup'));
+    expect(find.text('Belum ada riwayat klaim'), findsOneWidget);
+    await tester.pageBack();
     await tester.pumpAndSettle();
     expect(find.byType(ListingMakanan), findsOneWidget);
     expect(tester.takeException(), isNull);

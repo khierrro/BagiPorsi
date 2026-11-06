@@ -69,7 +69,7 @@ void main() {
     expect(profile.name, 'Rani');
     expect(find.text('Rani'), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.text('Lokasi tersimpan'),
+      find.text('Lokasi tersimpan').hitTestable(),
       200,
       scrollable: find.byType(Scrollable).first,
     );
@@ -80,7 +80,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(profile.location, 'Coblong, Bandung');
     await tester.scrollUntilVisible(
-      find.text('Notifikasi'),
+      find.text('Notifikasi').hitTestable(),
       100,
       scrollable: find.byType(Scrollable).first,
     );

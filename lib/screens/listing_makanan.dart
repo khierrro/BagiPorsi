@@ -7,7 +7,9 @@ import '../data/food_catalog.dart';
 import '../data/user_profile_store.dart';
 import '../design/bagi_porsi_theme.dart';
 import '../widgets/home_quick_actions.dart';
+import '../widgets/claim_scope.dart';
 import 'detail_makanan.dart';
+import 'klaim_saya.dart';
 
 const _green = BagiPorsiColors.green;
 const _ink = BagiPorsiColors.ink;
@@ -115,6 +117,10 @@ class _ListingMakananState extends State<ListingMakanan> {
   }
 
   void _showActivity({required bool transactions}) {
+    if (transactions) {
+      openClaims(context, history: true);
+      return;
+    }
     showModalBottomSheet<void>(
       context: context,
       useSafeArea: true,
@@ -904,6 +910,21 @@ class FoodCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final remaining =
+        ClaimScope.maybeOf(context)?.store.available(
+          FoodListing(
+            merchantName,
+            foodName,
+            distance,
+            portionsLeft,
+            originalPrice,
+            discountPrice,
+            imageUrl,
+            isFree,
+            const [],
+          ),
+        ) ??
+        portionsLeft;
     return Material(
       color: Colors.white,
       child: Column(
@@ -1009,7 +1030,7 @@ class FoodCard extends StatelessWidget {
                                       ],
                                     ),
                                     Text(
-                                      'Sisa $portionsLeft porsi',
+                                      'Sisa $remaining porsi',
                                       style: const TextStyle(
                                         fontSize: 11,
                                         color: Color(0xFF9B5B18),
@@ -1050,7 +1071,7 @@ class FoodCard extends StatelessWidget {
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed: portionsLeft <= 0
+                        onPressed: remaining <= 0
                             ? null
                             : () => Navigator.of(context).push<void>(
                                 MaterialPageRoute<void>(

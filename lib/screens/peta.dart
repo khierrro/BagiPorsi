@@ -6,6 +6,7 @@ import '../data/user_profile_store.dart';
 import '../design/bagi_porsi_theme.dart';
 import '../widgets/feature_widgets.dart';
 import '../widgets/home_quick_actions.dart';
+import '../widgets/claim_scope.dart';
 import 'chat_penjual.dart';
 
 class Peta extends StatefulWidget {
@@ -51,7 +52,7 @@ class _PetaState extends State<Peta> {
           ) &&
           (_filter != 'Gratis' || food.isFree) &&
           (_filter != 'Di bawah Rp15rb' || price < 15000) &&
-          (_filter != 'Stok terbatas' || food.portionsLeft <= 2);
+          (_filter != 'Stok terbatas' || _available(food) <= 2);
     }).toList();
     foods.sort(
       (a, b) =>
@@ -66,6 +67,9 @@ class _PetaState extends State<Peta> {
     }
     return foods;
   }
+
+  int _available(FoodListing food) =>
+      ClaimScope.maybeOf(context)?.store.available(food) ?? food.portionsLeft;
 
   void _select(FoodListing food) {
     setState(() => _selectedMerchant = food.merchantName);
@@ -469,7 +473,7 @@ class _PetaState extends State<Peta> {
                   ),
                   const SizedBox(height: 7),
                   Text(
-                    '${food.distance} · Sisa ${food.portionsLeft} porsi',
+                    '${food.distance} · Sisa ${_available(food)} porsi',
                     style: const TextStyle(
                       fontSize: 11,
                       color: BagiPorsiColors.green,

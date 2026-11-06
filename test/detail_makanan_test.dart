@@ -110,6 +110,8 @@ void main() {
         expect(find.text('Ringkasan pengambilan'), findsOneWidget);
         expect(find.text('2 porsi'), findsOneWidget);
         expect(find.text(isFree ? 'Gratis' : 'Rp 20.000'), findsWidgets);
+        await tester.ensureVisible(find.text('Kembali ke detail'));
+        await tester.pumpAndSettle();
         await tester.tap(find.text('Kembali ke detail'));
         await tester.pumpAndSettle();
         await tester.tap(find.byTooltip('Kurangi porsi'));
