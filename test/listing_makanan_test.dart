@@ -234,7 +234,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Notifikasi dan riwayat transaksi dapat dibuka dan ditutup', (
+  testWidgets('Notifikasi dan riwayat dari kartu informasi dapat dibuka', (
     tester,
   ) async {
     await tester.pumpWidget(const BagiPorsiApp());
@@ -243,7 +243,9 @@ void main() {
     expect(find.text('Belum ada notifikasi'), findsOneWidget);
     await tester.tap(find.text('Tutup'));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Riwayat transaksi'));
+    await tester.ensureVisible(find.text('Lihat riwayatmu'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Lihat riwayatmu'));
     await tester.pumpAndSettle();
     expect(find.text('Belum ada riwayat klaim'), findsOneWidget);
     await tester.pageBack();

@@ -223,7 +223,6 @@ class _ProfilState extends State<Profil> {
                         onTap: _showImpact,
                       ),
                       _groupTitle('Umum'),
-                      _menu('Klaim Saya', onTap: () => openClaims(context)),
                       _menu('Restoran favorit', onTap: _showFavorites),
                       _menu('Riwayat pengambilan', onTap: _showHistory),
                       _menu(

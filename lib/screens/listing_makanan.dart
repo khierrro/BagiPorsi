@@ -326,11 +326,6 @@ class _ListingMakananState extends State<ListingMakanan> {
           onPressed: () => _showActivity(transactions: false),
           icon: const Icon(Icons.notifications_none_rounded),
         ),
-        IconButton(
-          tooltip: 'Riwayat transaksi',
-          onPressed: () => _showActivity(transactions: true),
-          icon: const Icon(Icons.receipt_long_outlined),
-        ),
         const SizedBox(width: 8),
       ],
       flexibleSpace: ClipRect(
