@@ -21,6 +21,37 @@ abstract final class BagiPorsiTheme {
       surface: Colors.white,
     ),
     scaffoldBackgroundColor: Colors.white,
+    textTheme: const TextTheme(
+      headlineSmall: TextStyle(
+        fontSize: 22,
+        fontWeight: FontWeight.w800,
+        color: BagiPorsiColors.ink,
+      ),
+      titleMedium: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w700,
+        color: BagiPorsiColors.ink,
+      ),
+      bodyMedium: TextStyle(fontSize: 14, color: BagiPorsiColors.ink),
+      bodySmall: TextStyle(fontSize: 12, color: BagiPorsiColors.muted),
+      labelSmall: TextStyle(fontSize: 11, color: BagiPorsiColors.muted),
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: BagiPorsiColors.green,
+        foregroundColor: Colors.white,
+        minimumSize: const Size(48, 48),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: BagiPorsiColors.green,
+        side: const BorderSide(color: BagiPorsiColors.green),
+        minimumSize: const Size(48, 48),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+    ),
     appBarTheme: const AppBarTheme(
       backgroundColor: BagiPorsiColors.green,
       foregroundColor: Colors.white,
