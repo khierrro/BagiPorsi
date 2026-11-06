@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../data/food_catalog.dart';
 import '../data/user_profile_store.dart';
 import '../design/bagi_porsi_theme.dart';
 import '../widgets/feature_widgets.dart';
-import '../widgets/home_quick_actions.dart';
 import 'klaim_saya.dart';
+import 'lokasi.dart';
+import 'profil_edit.dart';
+import 'restoran_favorit.dart';
 
 class Profil extends StatefulWidget {
   const Profil({super.key, this.profile});
@@ -24,60 +25,21 @@ class _ProfilState extends State<Profil> {
     super.dispose();
   }
 
-  Future<void> _editName() async {
-    final name = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: Colors.white,
-      builder: (_) => _EditNameSheet(name: _profile.name),
+  void _editName() {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute(builder: (_) => ProfilEditPage(profile: _profile)),
     );
-    if (name != null) _profile.updateName(name);
   }
 
   void _showFavorites() {
-    showFeatureSheet(
-      context,
-      title: 'Restoran favorit',
-      icon: Icons.favorite_border_rounded,
-      message: _profile.favorites.isEmpty
-          ? 'Belum ada restoran favorit. Ketuk ikon hati pada kartu makanan di Peta untuk menyimpannya.'
-          : 'Tempat pilihanmu untuk menemukan porsi baik berikutnya.',
-      content: ListenableBuilder(
-        listenable: _profile,
-        builder: (context, child) => Column(
-          children: [
-            for (final food in foodCatalog.where(
-              (food) => _profile.isFavorite(food.merchantName),
-            ))
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: FoodPhoto(food: food, size: 48, radius: 12),
-                title: Text(
-                  food.merchantName,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                subtitle: Text(
-                  food.foodName,
-                  style: const TextStyle(fontSize: 12),
-                ),
-                trailing: IconButton(
-                  tooltip: 'Hapus favorit',
-                  onPressed: () => _profile.toggleFavorite(food.merchantName),
-                  icon: const Icon(
-                    Icons.favorite,
-                    color: BagiPorsiColors.green,
-                  ),
-                ),
-                onTap: () => openFoodDetails(context, food),
-              ),
-          ],
-        ),
-      ),
+    Navigator.of(context).push<void>(
+      MaterialPageRoute(builder: (_) => RestoranFavoritPage(profile: _profile)),
+    );
+  }
+
+  void _editLocation() {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute(builder: (_) => LokasiPage(profile: _profile)),
     );
   }
 
@@ -225,7 +187,7 @@ class _ProfilState extends State<Profil> {
                           title: 'Lokasi pengambilan',
                           subtitle:
                               _profile.location ?? 'Atur lokasi terdekatmu',
-                          onTap: () => chooseUserLocation(context, _profile),
+                          onTap: _editLocation,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -267,7 +229,7 @@ class _ProfilState extends State<Profil> {
                       _menu(
                         'Lokasi tersimpan',
                         subtitle: _profile.location,
-                        onTap: () => chooseUserLocation(context, _profile),
+                        onTap: _editLocation,
                       ),
                       _menu(
                         'Notifikasi',
@@ -636,80 +598,6 @@ class _ImpactStat extends StatelessWidget {
           ),
         ),
       ],
-    ),
-  );
-}
-
-class _EditNameSheet extends StatefulWidget {
-  const _EditNameSheet({required this.name});
-  final String name;
-  @override
-  State<_EditNameSheet> createState() => _EditNameSheetState();
-}
-
-class _EditNameSheetState extends State<_EditNameSheet> {
-  late final _controller = TextEditingController(text: widget.name);
-  final _form = GlobalKey<FormState>();
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => SafeArea(
-    top: false,
-    child: SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(
-        24,
-        8,
-        24,
-        24 + MediaQuery.viewInsetsOf(context).bottom,
-      ),
-      child: Form(
-        key: _form,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Edit profil',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                color: BagiPorsiColors.ink,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Nama yang tampil di profilmu.',
-              style: TextStyle(color: BagiPorsiColors.muted),
-            ),
-            const SizedBox(height: 20),
-            TextFormField(
-              controller: _controller,
-              maxLength: 50,
-              autofocus: true,
-              textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(
-                labelText: 'Nama',
-                border: OutlineInputBorder(),
-              ),
-              validator: (value) => value == null || value.trim().isEmpty
-                  ? 'Nama tidak boleh kosong.'
-                  : null,
-            ),
-            const SizedBox(height: 12),
-            FilledButton(
-              onPressed: () {
-                if (_form.currentState!.validate()) {
-                  Navigator.pop(context, _controller.text.trim());
-                }
-              },
-              child: const Text('Simpan perubahan'),
-            ),
-          ],
-        ),
-      ),
     ),
   );
 }
