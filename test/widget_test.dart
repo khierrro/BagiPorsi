@@ -37,11 +37,13 @@ void main() {
     await tester.tap(find.text('Peta'));
     await tester.pumpAndSettle();
     expect(find.byType(Peta), findsOneWidget);
-    expect(find.text('Peta Restoran'), findsOneWidget);
+    expect(find.text('Peta Restoran'), findsNothing);
+    expect(find.text('AREA PENCARIAN'), findsOneWidget);
 
     await tester.tap(find.text('Chat'));
     await tester.pumpAndSettle();
     expect(find.byType(PilihRestoran), findsOneWidget);
+    expect(find.text('Pesan'), findsNothing);
     expect(find.text('Pilih restoran'), findsOneWidget);
     expect(find.text('Ketik pesan...'), findsNothing);
     expect(tester.takeException(), isNull);
@@ -49,7 +51,8 @@ void main() {
     await tester.tap(find.text('Profil'));
     await tester.pumpAndSettle();
     expect(find.byType(Profil), findsOneWidget);
-    expect(find.text('Profil Saya'), findsOneWidget);
+    expect(find.text('Profil Saya'), findsNothing);
+    expect(find.text('Pejuang Pangan'), findsOneWidget);
 
     await tester.tap(find.text('Beranda'));
     await tester.pumpAndSettle();

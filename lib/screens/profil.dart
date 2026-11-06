@@ -189,124 +189,119 @@ class _ProfilState extends State<Profil> {
     listenable: _profile,
     builder: (context, child) => Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: BagiPorsiColors.mint,
-        foregroundColor: BagiPorsiColors.ink,
-        surfaceTintColor: Colors.transparent,
-        title: const Text(
-          'Profil Saya',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-        ),
-      ),
-      body: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 720),
-          child: ListView(
-            padding: const EdgeInsets.only(bottom: 28),
-            children: [
-              Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [BagiPorsiColors.mint, BagiPorsiColors.canvas],
-                    stops: [0, .45],
+      body: SafeArea(
+        bottom: false,
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: ListView(
+              padding: const EdgeInsets.only(bottom: 28),
+              children: [
+                Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [BagiPorsiColors.mint, BagiPorsiColors.canvas],
+                      stops: [0, .45],
+                    ),
                   ),
-                ),
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                child: Column(
-                  children: [
-                    _identityCard(),
-                    const SizedBox(height: 16),
-                    _shortcutPair(
-                      _ProfileShortcut(
-                        icon: Icons.volunteer_activism_outlined,
-                        title: 'Dampak baikmu',
-                        subtitle: '0 porsi diselamatkan',
-                        featured: true,
-                        onTap: _showImpact,
-                      ),
-                      _ProfileShortcut(
-                        icon: Icons.add_location_alt_outlined,
-                        title: 'Lokasi pengambilan',
-                        subtitle: _profile.location ?? 'Atur lokasi terdekatmu',
-                        onTap: () => chooseUserLocation(context, _profile),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _shortcutPair(
-                      _ProfileShortcut(
-                        icon: Icons.favorite_rounded,
-                        title: 'Restoran favorit',
-                        subtitle: '${_profile.favorites.length} tersimpan',
-                        compact: true,
-                        onTap: _showFavorites,
-                      ),
-                      _ProfileShortcut(
-                        icon: Icons.receipt_long_outlined,
-                        title: 'Riwayat pengambilan',
-                        subtitle: 'Lihat aktivitasmu',
-                        compact: true,
-                        onTap: _showHistory,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _groupTitle('Lebih banyak kebaikan'),
-                    _menu('Poin kamu', detail: '0 poin', onTap: _showPoints),
-                    _menu(
-                      'Dampak baikmu',
-                      detail: '0 porsi',
-                      onTap: _showImpact,
-                    ),
-                    _groupTitle('Umum'),
-                    _menu('Klaim Saya', onTap: () => openClaims(context)),
-                    _menu('Restoran favorit', onTap: _showFavorites),
-                    _menu('Riwayat pengambilan', onTap: _showHistory),
-                    _menu(
-                      'Lokasi tersimpan',
-                      subtitle: _profile.location,
-                      onTap: () => chooseUserLocation(context, _profile),
-                    ),
-                    _menu(
-                      'Notifikasi',
-                      detail: _profile.notificationsEnabled
-                          ? 'Aktif'
-                          : 'Nonaktif',
-                      onTap: _notificationSettings,
-                    ),
-                    _groupTitle('Bantuan'),
-                    _menu('Pusat bantuan', onTap: _help),
-                    _menu(
-                      'Tentang BagiPorsi',
-                      onTap: () => showFeatureSheet(
-                        context,
-                        title: 'Porsi baik untuk semua',
-                        icon: Icons.volunteer_activism_outlined,
-                        message: 'BagiPorsi mempertemukan makanan yang masih tersedia dengan orang yang membutuhkannya. Temukan porsi gratis atau harga hemat, lalu koordinasikan pengambilan dengan toko.',
-                      ),
-                    ),
-                    const SizedBox(height: 28),
-                    const Center(
-                      child: Text(
-                        'BagiPorsi · Setiap porsi berarti',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: BagiPorsiColors.muted,
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                  child: Column(
+                    children: [
+                      _identityCard(),
+                      const SizedBox(height: 16),
+                      _shortcutPair(
+                        _ProfileShortcut(
+                          icon: Icons.volunteer_activism_outlined,
+                          title: 'Dampak baikmu',
+                          subtitle: '0 porsi diselamatkan',
+                          featured: true,
+                          onTap: _showImpact,
+                        ),
+                        _ProfileShortcut(
+                          icon: Icons.add_location_alt_outlined,
+                          title: 'Lokasi pengambilan',
+                          subtitle:
+                              _profile.location ?? 'Atur lokasi terdekatmu',
+                          onTap: () => chooseUserLocation(context, _profile),
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 12),
+                      _shortcutPair(
+                        _ProfileShortcut(
+                          icon: Icons.favorite_rounded,
+                          title: 'Restoran favorit',
+                          subtitle: '${_profile.favorites.length} tersimpan',
+                          compact: true,
+                          onTap: _showFavorites,
+                        ),
+                        _ProfileShortcut(
+                          icon: Icons.receipt_long_outlined,
+                          title: 'Riwayat pengambilan',
+                          subtitle: 'Lihat aktivitasmu',
+                          compact: true,
+                          onTap: _showHistory,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _groupTitle('Lebih banyak kebaikan'),
+                      _menu('Poin kamu', detail: '0 poin', onTap: _showPoints),
+                      _menu(
+                        'Dampak baikmu',
+                        detail: '0 porsi',
+                        onTap: _showImpact,
+                      ),
+                      _groupTitle('Umum'),
+                      _menu('Klaim Saya', onTap: () => openClaims(context)),
+                      _menu('Restoran favorit', onTap: _showFavorites),
+                      _menu('Riwayat pengambilan', onTap: _showHistory),
+                      _menu(
+                        'Lokasi tersimpan',
+                        subtitle: _profile.location,
+                        onTap: () => chooseUserLocation(context, _profile),
+                      ),
+                      _menu(
+                        'Notifikasi',
+                        detail: _profile.notificationsEnabled
+                            ? 'Aktif'
+                            : 'Nonaktif',
+                        onTap: _notificationSettings,
+                      ),
+                      _groupTitle('Bantuan'),
+                      _menu('Pusat bantuan', onTap: _help),
+                      _menu(
+                        'Tentang BagiPorsi',
+                        onTap: () => showFeatureSheet(
+                          context,
+                          title: 'Porsi baik untuk semua',
+                          icon: Icons.volunteer_activism_outlined,
+                          message: 'BagiPorsi mempertemukan makanan yang masih tersedia dengan orang yang membutuhkannya. Temukan porsi gratis atau harga hemat, lalu koordinasikan pengambilan dengan toko.',
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+                      const Center(
+                        child: Text(
+                          'BagiPorsi · Setiap porsi berarti',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: BagiPorsiColors.muted,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

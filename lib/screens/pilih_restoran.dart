@@ -26,6 +26,13 @@ class _PilihRestoranState extends State<PilihRestoran> {
     super.dispose();
   }
 
+  void _showConversationInfo() => showFeatureSheet(
+    context,
+    title: 'Obrolan untuk porsi baik',
+    icon: Icons.chat_bubble_outline_rounded,
+    message: 'Tanyakan stok, alamat, dan jadwal pengambilan kepada toko. Pesan saat ini tersimpan di sesi perangkat ini dan belum dikirim ke toko.',
+  );
+
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: widget.store,
@@ -55,54 +62,36 @@ class _PilihRestoranState extends State<PilihRestoran> {
 
       return Scaffold(
         backgroundColor: Colors.white,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          foregroundColor: BagiPorsiColors.ink,
-          surfaceTintColor: Colors.transparent,
-          title: const Text(
-            'Pesan',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
-          ),
-          actions: [
-            IconButton(
-              tooltip: 'Tentang percakapan',
-              onPressed: () => showFeatureSheet(
-                context,
-                title: 'Obrolan untuk porsi baik',
-                icon: Icons.chat_bubble_outline_rounded,
-                message: 'Tanyakan stok, alamat, dan jadwal pengambilan kepada toko. Pesan saat ini tersimpan di sesi perangkat ini dan belum dikirim ke toko.',
-              ),
-              icon: const Icon(Icons.info_outline_rounded),
-            ),
-          ],
-        ),
         body: SafeArea(
-          top: false,
           bottom: false,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: const BoxDecoration(
                   border: Border(
                     bottom: BorderSide(color: BagiPorsiColors.border),
                   ),
                 ),
-                child: const Row(
+                child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     CircleAvatar(
                       radius: 24,
                       backgroundColor: Colors.white,
-                      child: Icon(
-                        Icons.forum_outlined,
-                        color: BagiPorsiColors.green,
+                      child: IconButton(
+                        tooltip: 'Tentang percakapan',
+                        onPressed: _showConversationInfo,
+                        icon: const Icon(
+                          Icons.forum_outlined,
+                          color: BagiPorsiColors.green,
+                        ),
                       ),
                     ),
-                    SizedBox(width: 14),
-                    Expanded(
+                    const SizedBox(width: 14),
+                    const Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
