@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:zerohunger/design/bagi_porsi_theme.dart';
 import 'package:zerohunger/main.dart';
 import 'package:zerohunger/screens/detail_makanan.dart';
+import 'package:zerohunger/screens/checkout_makanan.dart';
 
 void main() {
   setUp(() {
@@ -115,6 +116,8 @@ void main() {
         await tester.tap(find.text('Lanjut ambil'));
         await tester.pumpAndSettle();
         expect(find.text('Ringkasan pengambilan'), findsOneWidget);
+        expect(find.byType(CheckoutMakanan), findsOneWidget);
+        expect(find.byType(BottomSheet), findsNothing);
         expect(find.text('2 porsi'), findsOneWidget);
         expect(find.text(isFree ? 'Gratis' : 'Rp 20.000'), findsWidgets);
         await tester.ensureVisible(find.text('Kembali ke detail'));

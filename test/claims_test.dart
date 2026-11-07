@@ -4,6 +4,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:zerohunger/data/chat_store.dart';
 import 'package:zerohunger/data/claim_store.dart';
 import 'package:zerohunger/data/food_catalog.dart';
+import 'package:zerohunger/data/user_profile_store.dart';
 import 'package:zerohunger/design/bagi_porsi_theme.dart';
 import 'package:zerohunger/screens/detail_makanan.dart';
 import 'package:zerohunger/screens/klaim_saya.dart';
@@ -11,22 +12,26 @@ import 'package:zerohunger/screens/chat_penjual.dart';
 import 'package:zerohunger/widgets/claim_scope.dart';
 import 'package:zerohunger/main.dart';
 
-Widget app(ClaimStore store, ChatStore chat, Widget page, {double scale = 1}) =>
-    ClaimScope(
-      store: store,
-      chatStore: chat,
-      child: MaterialApp(
-        theme: BagiPorsiTheme.data,
-        builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context).copyWith(
-            textScaler: TextScaler.linear(scale),
-            disableAnimations: true,
-          ),
-          child: child!,
+Widget app(ClaimStore store, ChatStore chat, Widget page, {double scale = 1}) {
+  final profile = UserProfileStore()..updateLocation('Coblong, Bandung');
+  addTearDown(profile.dispose);
+  return ClaimScope(
+    store: store,
+    chatStore: chat,
+    profile: profile,
+    child: MaterialApp(
+      theme: BagiPorsiTheme.data,
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(
+          textScaler: TextScaler.linear(scale),
+          disableAnimations: true,
         ),
-        home: page,
+        child: child!,
       ),
-    );
+      home: page,
+    ),
+  );
+}
 
 void main() {
   setUp(() {
@@ -42,7 +47,9 @@ void main() {
     (tester) async {
       final store = ClaimStore();
       addTearDown(store.dispose);
-      await tester.pumpWidget(BagiPorsiApp(claims: store));
+      final profile = UserProfileStore()..updateLocation('Coblong, Bandung');
+      addTearDown(profile.dispose);
+      await tester.pumpWidget(BagiPorsiApp(claims: store, profile: profile));
       await tester.enterText(find.byType(TextField), 'Nasi Uduk');
       await tester.pumpAndSettle();
       await tester.scrollUntilVisible(
@@ -63,6 +70,7 @@ void main() {
       await tester.tap(find.text('Konfirmasi klaim'));
       await tester.pumpAndSettle();
       expect(store.active.length, 1);
+      expect(store.active.single.userLocation!.address, 'Coblong, Bandung');
       expect(find.byType(DetailMakanan), findsNothing);
       expect(find.byType(KlaimSaya), findsOneWidget);
       expect(

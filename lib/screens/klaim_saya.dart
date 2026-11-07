@@ -546,279 +546,327 @@ class _KlaimSayaState extends State<KlaimSaya> with WidgetsBindingObserver {
     final date = claim.expiresAt.toLocal();
     final deadline =
         '${date.day}/${date.month}/${date.year}, ${date.hour.toString().padLeft(2, '0')}.${date.minute.toString().padLeft(2, '0')}';
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: BagiPorsiColors.border),
+    return Card.outlined(
+      margin: EdgeInsets.zero,
+      color: Colors.white,
+      elevation: 0,
+      surfaceTintColor: Colors.transparent,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        side: const BorderSide(color: BagiPorsiColors.border),
         borderRadius: BorderRadius.circular(18),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Wrap(
-            alignment: WrapAlignment.spaceBetween,
-            spacing: 8,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              InfoPill(
-                label,
-                icon: active
-                    ? Icons.schedule_rounded
-                    : Icons.check_circle_outline,
-                color: active || status == ClaimStatus.collected
-                    ? BagiPorsiColors.green
-                    : BagiPorsiColors.muted,
-              ),
-              Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Text(
-                    '${claim.quantity} porsi',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: BagiPorsiColors.ink,
-                    ),
-                  ),
-                  if (active || status == ClaimStatus.collected)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: BagiPorsiColors.mint,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(
-                        '+${claim.pointsEarned} poin',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: BagiPorsiColors.green,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              FoodPhoto(food: claim.food, size: 52, radius: 12),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                InfoPill(
+                  label,
+                  icon: active
+                      ? Icons.schedule_rounded
+                      : Icons.check_circle_outline,
+                  color: active || status == ClaimStatus.collected
+                      ? BagiPorsiColors.green
+                      : BagiPorsiColors.muted,
+                ),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(
-                      claim.food.foodName,
+                      '${claim.quantity} porsi',
                       style: const TextStyle(
-                        fontSize: 15,
+                        fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: BagiPorsiColors.ink,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      claim.food.merchantName,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: BagiPorsiColors.muted,
+                    if (active || status == ClaimStatus.collected)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: BagiPorsiColors.mint,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          '+${claim.pointsEarned} poin',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: BagiPorsiColors.green,
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      'Total: ${claim.totalLabel}${claim.food.isFree ? '' : ' (Tunai)'}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: BagiPorsiColors.green,
-                      ),
-                    ),
                   ],
                 ),
-              ),
-            ],
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            child: Divider(height: 1, color: BagiPorsiColors.border),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              color: BagiPorsiColors.mint,
-              border: Border.all(color: const Color(0xFFBDDDCE)),
-              borderRadius: BorderRadius.circular(12),
+              ],
             ),
-            padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
-            child: Row(
+            const SizedBox(height: 14),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                FoodPhoto(food: claim.food, size: 52, radius: 12),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'KODE PENGAMBILAN',
-                        style: TextStyle(
-                          fontSize: 9,
+                      Text(
+                        claim.food.foodName,
+                        style: const TextStyle(
+                          fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          letterSpacing: .6,
-                          color: BagiPorsiColors.muted,
+                          color: BagiPorsiColors.ink,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        claim.code,
+                        claim.food.merchantName,
                         style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1,
+                          fontSize: 12,
+                          color: BagiPorsiColors.muted,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        'Total: ${claim.totalLabel}${claim.food.isFree ? '' : ' (Tunai)'}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
                           color: BagiPorsiColors.green,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        active ? 'Ketuk QR untuk melihat kode demo' : label,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: BagiPorsiColors.muted,
                         ),
                       ),
                     ],
                   ),
                 ),
-                if (active)
-                  IconButton.filledTonal(
-                    tooltip: 'Lihat kode ${claim.code}',
-                    onPressed: () => _showCode(claim),
-                    icon: const Icon(Icons.qr_code_2_rounded),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: BagiPorsiColors.green,
-                    ),
-                  ),
               ],
             ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(
-                Icons.schedule_rounded,
-                size: 14,
-                color: BagiPorsiColors.muted,
-              ),
-              const SizedBox(width: 5),
-              Expanded(
-                child: Text(
-                  'Batas demo: $deadline',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    height: 1.5,
-                    color: BagiPorsiColors.muted,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          if (active) ...[
-            const SizedBox(height: 14),
-            FilledButton(
-              onPressed: _store!.busy ? null : () => _collect(claim),
-              style: FilledButton.styleFrom(
-                backgroundColor: BagiPorsiColors.green,
-                foregroundColor: Colors.white,
-                minimumSize: const Size.fromHeight(46),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+            if (claim.userLocation != null) ...[
+              const SizedBox(height: 12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.check_circle_outline_rounded, size: 19),
-                  SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      'Selesaikan pengambilan',
-                      textAlign: TextAlign.center,
+                  const Icon(
+                    Icons.location_on_outlined,
+                    size: 17,
+                    color: BagiPorsiColors.green,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Lokasi pengguna · ${claim.userLocation!.label}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: BagiPorsiColors.ink,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          claim.userLocation!.address,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            height: 1.5,
+                            color: BagiPorsiColors.muted,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
+            ],
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Divider(height: 1, color: BagiPorsiColors.border),
             ),
-            const SizedBox(height: 8),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final contact = OutlinedButton.icon(
-                  onPressed: () => _contact(claim),
-                  icon: const Icon(Icons.chat_bubble_outline, size: 17),
-                  label: const Text('Hubungi penjual'),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: BagiPorsiColors.green),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                );
-                final directions = OutlinedButton.icon(
-                  onPressed: () => _directions(claim),
-                  icon: const Icon(Icons.navigation_rounded, size: 17),
-                  label: const Text('Petunjuk ambil'),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: BagiPorsiColors.border),
-                    foregroundColor: BagiPorsiColors.ink,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                );
-                if (constraints.maxWidth /
-                        (MediaQuery.textScalerOf(context).scale(14) / 14) <
-                    300) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [contact, const SizedBox(height: 8), directions],
-                  );
-                }
-                return Row(
-                  children: [
-                    Expanded(child: contact),
-                    const SizedBox(width: 8),
-                    Expanded(child: directions),
-                  ],
-                );
-              },
-            ),
-            TextButton(
-              onPressed: _store!.busy ? null : () => _cancel(claim),
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFFBB5547),
+            Container(
+              decoration: BoxDecoration(
+                color: BagiPorsiColors.mint,
+                border: Border.all(color: const Color(0xFFBDDDCE)),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: const Text('Batalkan klaim'),
+              padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'KODE PENGAMBILAN',
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: .6,
+                            color: BagiPorsiColors.muted,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          claim.code,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1,
+                            color: BagiPorsiColors.green,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          active ? 'Ketuk QR untuk melihat kode demo' : label,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: BagiPorsiColors.muted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (active)
+                    IconButton.filledTonal(
+                      tooltip: 'Lihat kode ${claim.code}',
+                      onPressed: () => _showCode(claim),
+                      icon: const Icon(Icons.qr_code_2_rounded),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: BagiPorsiColors.green,
+                      ),
+                    ),
+                ],
+              ),
             ),
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.schedule_rounded,
+                  size: 14,
+                  color: BagiPorsiColors.muted,
+                ),
+                const SizedBox(width: 5),
+                Expanded(
+                  child: Text(
+                    'Batas demo: $deadline',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      height: 1.5,
+                      color: BagiPorsiColors.muted,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (active) ...[
+              const SizedBox(height: 14),
+              FilledButton(
+                onPressed: _store!.busy ? null : () => _collect(claim),
+                style: FilledButton.styleFrom(
+                  backgroundColor: BagiPorsiColors.green,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(46),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.check_circle_outline_rounded, size: 19),
+                    SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        'Selesaikan pengambilan',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final contact = OutlinedButton.icon(
+                    onPressed: () => _contact(claim),
+                    icon: const Icon(Icons.chat_bubble_outline, size: 17),
+                    label: const Text('Hubungi penjual'),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: BagiPorsiColors.green),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  );
+                  final directions = OutlinedButton.icon(
+                    onPressed: () => _directions(claim),
+                    icon: const Icon(Icons.navigation_rounded, size: 17),
+                    label: const Text('Petunjuk ambil'),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: BagiPorsiColors.border),
+                      foregroundColor: BagiPorsiColors.ink,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  );
+                  if (constraints.maxWidth /
+                          (MediaQuery.textScalerOf(context).scale(14) / 14) <
+                      300) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        contact,
+                        const SizedBox(height: 8),
+                        directions,
+                      ],
+                    );
+                  }
+                  return Row(
+                    children: [
+                      Expanded(child: contact),
+                      const SizedBox(width: 8),
+                      Expanded(child: directions),
+                    ],
+                  );
+                },
+              ),
+              TextButton(
+                onPressed: _store!.busy ? null : () => _cancel(claim),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFFBB5547),
+                ),
+                child: const Text('Batalkan klaim'),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

@@ -11,6 +11,23 @@ enum ClaimStatus { active, collected, cancelled, expired }
 String rupiah(int amount) =>
     'Rp ${amount.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => '.')}';
 
+/// Snapshot of the user's selected address, separate from the pickup store.
+class ClaimLocation {
+  const ClaimLocation({required this.label, required this.address});
+  final String label, address;
+
+  Map<String, dynamic> toJson() => {'label': label, 'address': address};
+
+  factory ClaimLocation.fromJson(Map<String, dynamic> json) {
+    final label = json['label'] as String;
+    final address = json['address'] as String;
+    if (label.trim().isEmpty || address.trim().isEmpty) {
+      throw const FormatException('Alamat klaim tidak valid');
+    }
+    return ClaimLocation(label: label, address: address);
+  }
+}
+
 class FoodClaim {
   const FoodClaim({
     required this.code,
@@ -20,6 +37,7 @@ class FoodClaim {
     required this.createdAt,
     required this.expiresAt,
     this.status = ClaimStatus.active,
+    this.userLocation,
   });
 
   static const int pointsPerPortion = 10;
@@ -29,6 +47,7 @@ class FoodClaim {
   final int quantity, unitPrice;
   final DateTime createdAt, expiresAt;
   final ClaimStatus status;
+  final ClaimLocation? userLocation;
   int get total => unitPrice * quantity;
   String get totalLabel => food.isFree ? 'Gratis' : rupiah(total);
   String get paymentLabel =>
@@ -47,6 +66,7 @@ class FoodClaim {
     createdAt: createdAt,
     expiresAt: expiresAt,
     status: value,
+    userLocation: userLocation,
   );
 
   Map<String, dynamic> toJson() => {
@@ -56,6 +76,7 @@ class FoodClaim {
     'createdAt': createdAt.toIso8601String(),
     'expiresAt': expiresAt.toIso8601String(),
     'status': status.name,
+    'userLocation': userLocation?.toJson(),
     'food': {
       'merchant': food.merchantName,
       'name': food.foodName,
@@ -89,6 +110,11 @@ class FoodClaim {
       createdAt: DateTime.parse(json['createdAt'] as String),
       expiresAt: DateTime.parse(json['expiresAt'] as String),
       status: ClaimStatus.values.byName(json['status'] as String),
+      userLocation: json['userLocation'] == null
+          ? null
+          : ClaimLocation.fromJson(
+              json['userLocation'] as Map<String, dynamic>,
+            ),
     );
     if (claim.quantity < 1 ||
         claim.unitPrice < 0 ||
@@ -212,10 +238,19 @@ class ClaimStore extends ChangeNotifier {
     if (!_loaded || _busy) throw StateError('Tunggu hingga data klaim siap.');
   }
 
-  Future<FoodClaim> create(FoodListing food, int quantity) {
+  Future<FoodClaim> create(
+    FoodListing food,
+    int quantity, {
+    ClaimLocation? userLocation,
+  }) {
     _checkReady();
     if (quantity < 1 || quantity > available(food)) {
       throw StateError('Jumlah porsi melebihi stok yang tersedia.');
+    }
+    if (userLocation != null &&
+        (userLocation.label.trim().isEmpty ||
+            userLocation.address.trim().isEmpty)) {
+      throw StateError('Lokasi pengguna belum lengkap.');
     }
     final price = food.isFree
         ? 0
@@ -237,6 +272,7 @@ class ClaimStore extends ChangeNotifier {
       unitPrice: price,
       createdAt: now,
       expiresAt: now.add(const Duration(hours: 2)),
+      userLocation: userLocation,
     );
     return _save([claim, ..._claims], claim);
   }

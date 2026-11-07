@@ -19,8 +19,9 @@ Future<void> main() async {
 }
 
 class BagiPorsiApp extends StatefulWidget {
-  const BagiPorsiApp({super.key, this.claims});
+  const BagiPorsiApp({super.key, this.claims, this.profile});
   final ClaimStore? claims;
+  final UserProfileStore? profile;
 
   @override
   State<BagiPorsiApp> createState() => _BagiPorsiAppState();
@@ -30,11 +31,13 @@ class _BagiPorsiAppState extends State<BagiPorsiApp> {
   final _navigationKey = GlobalKey<_MainNavigationState>();
   late final _claims = widget.claims ?? ClaimStore();
   final _chatStore = ChatStore();
+  late final _profile = widget.profile ?? UserProfileStore();
 
   @override
   void dispose() {
     if (widget.claims == null) _claims.dispose();
     _chatStore.dispose();
+    if (widget.profile == null) _profile.dispose();
     super.dispose();
   }
 
@@ -43,20 +46,26 @@ class _BagiPorsiAppState extends State<BagiPorsiApp> {
     return ClaimScope(
       store: _claims,
       chatStore: _chatStore,
+      profile: _profile,
       onOpenClaims: () => _navigationKey.currentState?.showClaims(),
       child: MaterialApp(
         title: 'BagiPorsi',
         debugShowCheckedModeBanner: false,
         theme: BagiPorsiTheme.data,
-        home: MainNavigation(key: _navigationKey, chatStore: _chatStore),
+        home: MainNavigation(
+          key: _navigationKey,
+          chatStore: _chatStore,
+          profile: _profile,
+        ),
       ),
     );
   }
 }
 
 class MainNavigation extends StatefulWidget {
-  const MainNavigation({super.key, this.chatStore});
+  const MainNavigation({super.key, this.chatStore, this.profile});
   final ChatStore? chatStore;
+  final UserProfileStore? profile;
 
   @override
   State<MainNavigation> createState() => _MainNavigationState();
@@ -68,7 +77,7 @@ class _MainNavigationState extends State<MainNavigation> {
   void showClaims() => setState(() => _selectedIndex = 2);
 
   late final _chatStore = widget.chatStore ?? ChatStore();
-  final _profile = UserProfileStore();
+  late final _profile = widget.profile ?? UserProfileStore();
 
   late final List<Widget> _pages = [
     ListingMakanan(profile: _profile),
@@ -81,7 +90,7 @@ class _MainNavigationState extends State<MainNavigation> {
   @override
   void dispose() {
     if (widget.chatStore == null) _chatStore.dispose();
-    _profile.dispose();
+    if (widget.profile == null) _profile.dispose();
     super.dispose();
   }
 

@@ -20,6 +20,37 @@ class MemoryStorage implements ClaimStorage {
 
 void main() {
   test(
+    'Alamat klaim tersimpan sebagai snapshot dan data lama tetap bisa dimuat',
+    () async {
+      final storage = MemoryStorage();
+      final store = ClaimStore(storage: storage);
+      addTearDown(store.dispose);
+      await store.load();
+      final legacy = await store.create(foodCatalog.first, 1);
+      final claim = await store.create(
+        foodCatalog[1],
+        1,
+        userLocation: const ClaimLocation(
+          label: 'Kampus',
+          address: 'Jalan Kampus 10',
+        ),
+      );
+      await store.collect(claim.code);
+      final restored = ClaimStore(storage: storage);
+      addTearDown(restored.dispose);
+      await restored.load();
+      expect(restored.collected.single.userLocation!.label, 'Kampus');
+      expect(
+        restored.collected.single.userLocation!.address,
+        'Jalan Kampus 10',
+      );
+      expect(restored.active.single.code, legacy.code);
+      expect(restored.active.single.userLocation, isNull);
+      final oldJson = legacy.toJson()..remove('userLocation');
+      expect(FoodClaim.fromJson(oldJson).userLocation, isNull);
+    },
+  );
+  test(
     'Klaim membatasi stok, menghitung total, dan pembatalan melepas stok',
     () async {
       final store = ClaimStore();

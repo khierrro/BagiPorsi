@@ -1236,12 +1236,7 @@ class FoodCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: selected ? BagiPorsiColors.mint.withAlpha(110) : Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: selected ? _green : BagiPorsiColors.border,
-          width: selected ? 1.5 : 1,
-        ),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0A183C32),
@@ -1250,8 +1245,19 @@ class FoodCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
+      child: Card.outlined(
+        margin: EdgeInsets.zero,
+        color: selected ? BagiPorsiColors.mint.withAlpha(110) : Colors.white,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(
+            color: selected ? _green : BagiPorsiColors.border,
+            width: selected ? 1.5 : 1,
+          ),
+        ),
         child: InkWell(
           borderRadius: BorderRadius.circular(18),
           onTap: remaining <= 0 ? null : () => _openDetails(context),

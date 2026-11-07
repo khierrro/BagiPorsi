@@ -4,9 +4,14 @@ import '../data/user_profile_store.dart';
 import '../design/bagi_porsi_theme.dart';
 
 class LokasiPage extends StatefulWidget {
-  const LokasiPage({super.key, required this.profile});
+  const LokasiPage({
+    super.key,
+    required this.profile,
+    this.selectionMode = false,
+  });
 
   final UserProfileStore profile;
+  final bool selectionMode;
 
   @override
   State<LokasiPage> createState() => _LokasiPageState();
@@ -24,6 +29,10 @@ class _LokasiPageState extends State<LokasiPage> {
           _SavePlaceSheet(profile: widget.profile, kind: kind),
     );
     if (saved != null && mounted) {
+      if (widget.selectionMode) {
+        Navigator.pop(context, saved);
+        return;
+      }
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
@@ -38,6 +47,10 @@ class _LokasiPageState extends State<LokasiPage> {
 
   void _selectPlace(SavedLocation place) {
     widget.profile.selectLocation(place.id);
+    if (widget.selectionMode) {
+      Navigator.pop(context, place);
+      return;
+    }
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
@@ -75,14 +88,16 @@ class _LokasiPageState extends State<LokasiPage> {
             elevation: 0,
             scrolledUnderElevation: 0,
             centerTitle: true,
-            leading: IconButton(
-              tooltip: 'Tutup',
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.close_rounded, size: 26),
-            ),
-            title: const Text(
-              'Tempat Tersimpan',
-              style: TextStyle(
+            leading: widget.selectionMode
+                ? const BackButton()
+                : IconButton(
+                    tooltip: 'Tutup',
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close_rounded, size: 26),
+                  ),
+            title: Text(
+              widget.selectionMode ? 'Pilih lokasi' : 'Tempat Tersimpan',
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
                 color: BagiPorsiColors.ink,
