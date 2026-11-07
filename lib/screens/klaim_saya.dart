@@ -857,11 +857,19 @@ class _KlaimSayaState extends State<KlaimSaya> with WidgetsBindingObserver {
                   );
                 },
               ),
+              const SizedBox(height: 12),
               TextButton(
                 onPressed: _store!.busy ? null : () => _cancel(claim),
-                style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFFBB5547),
-                ),
+                style:
+                    TextButton.styleFrom(
+                      foregroundColor: const Color(0xFFBB5547),
+                    ).copyWith(
+                      overlayColor: WidgetStateProperty.resolveWith<Color?>(
+                        (states) => states.contains(WidgetState.hovered)
+                            ? Colors.transparent
+                            : null,
+                      ),
+                    ),
                 child: const Text('Batalkan klaim'),
               ),
             ],

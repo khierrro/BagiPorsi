@@ -49,6 +49,9 @@ class _ListingMakananState extends State<ListingMakanan> {
         double.infinity,
       );
 
+  double get _locationExtent =>
+      math.max(48, MediaQuery.textScalerOf(context).scale(14) + 24);
+
   static const _categories = [
     'Semua',
     'Ayam',
@@ -353,8 +356,8 @@ class _ListingMakananState extends State<ListingMakanan> {
       scrolledUnderElevation: 0,
       shape: Border(bottom: BorderSide(color: borderColor)),
       toolbarHeight: _toolbarHeight,
-      collapsedHeight: _toolbarHeight + _searchExtent,
-      expandedHeight: _toolbarHeight + _searchExtent,
+      collapsedHeight: _toolbarHeight + _locationExtent + _searchExtent,
+      expandedHeight: _toolbarHeight + _locationExtent + _searchExtent,
       leadingWidth: 52,
       titleSpacing: 0,
       centerTitle: false,
@@ -371,54 +374,14 @@ class _ListingMakananState extends State<ListingMakanan> {
           size: 24,
         ),
       ),
-      title: ListenableBuilder(
-        listenable: _profile,
-        builder: (context, _) => InkWell(
-          borderRadius: BorderRadius.circular(10),
-          onTap: () => chooseUserLocation(context, _profile),
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'AMBIL SENDIRI · ${_profile.location ?? "Belum diatur"}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.5,
-                        color: subtitleColor,
-                      ),
-                    ),
-                    const SizedBox(width: 2),
-                    Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      size: 14,
-                      color: subtitleColor,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 1),
-                const Text(
-                  'Bagi Porsi',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
+      title: const Text(
+        'Bagi Porsi',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.4,
         ),
       ),
       actions: [
@@ -463,7 +426,69 @@ class _ListingMakananState extends State<ListingMakanan> {
         child: Stack(
           children: [
             Positioned(
-              top: MediaQuery.paddingOf(context).top + _toolbarHeight + 2,
+              top: MediaQuery.paddingOf(context).top + _toolbarHeight,
+              left: 16,
+              right: 16,
+              child: SizedBox(
+                height: _locationExtent,
+                child: ListenableBuilder(
+                  listenable: _profile,
+                  builder: (context, _) {
+                    final active = _profile.savedLocations
+                        .where((place) => place.id == _profile.activeLocationId)
+                        .firstOrNull;
+                    final label = active == null
+                        ? (_profile.location ?? 'Pilih lokasi kamu')
+                        : '${active.label} · ${active.address}';
+                    return Semantics(
+                      label: 'Pilih lokasi pengguna',
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(10),
+                          hoverColor: Colors.transparent,
+                          onTap: () => chooseUserLocation(context, _profile),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.location_on_outlined,
+                                size: 20,
+                                color: foreground,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  label,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: subtitleColor,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                                size: 20,
+                                color: foreground,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            Positioned(
+              top:
+                  MediaQuery.paddingOf(context).top +
+                  _toolbarHeight +
+                  _locationExtent +
+                  2,
               left: 16,
               right: 16,
               child: SizedBox(
