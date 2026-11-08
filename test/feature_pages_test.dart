@@ -34,7 +34,9 @@ void main() {
     addTearDown(tester.view.resetViewInsets);
     final profile = UserProfileStore();
     addTearDown(profile.dispose);
-    await tester.pumpWidget(app(ListingMakanan(profile: profile)));
+    await tester.pumpWidget(
+      app(Scaffold(body: ListingMakanan(profile: profile))),
+    );
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'roti');
     await tester.pumpAndSettle();
@@ -51,15 +53,16 @@ void main() {
   ) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
-    tester.view.viewInsets = const FakeViewPadding(bottom: 330);
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     addTearDown(tester.view.resetViewInsets);
     final profile = UserProfileStore();
     addTearDown(profile.dispose);
-    await tester.pumpWidget(app(Peta(profile: profile)));
+    await tester.pumpWidget(app(Scaffold(body: Peta(profile: profile))));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'roti');
+    await tester.pumpAndSettle();
+    tester.view.viewInsets = const FakeViewPadding(bottom: 330);
     await tester.pumpAndSettle();
     expect(find.text('AREA PENCARIAN'), findsNothing);
     final card = tester.getBottomLeft(find.text('Lihat makanan').first);

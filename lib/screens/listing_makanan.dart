@@ -26,7 +26,8 @@ class ListingMakanan extends StatefulWidget {
   State<ListingMakanan> createState() => _ListingMakananState();
 }
 
-class _ListingMakananState extends State<ListingMakanan> {
+class _ListingMakananState extends State<ListingMakanan>
+    with WidgetsBindingObserver {
   static const _toolbarHeight = 60.0;
   static const _headerGreen = BagiPorsiColors.deepGreen;
 
@@ -72,6 +73,7 @@ class _ListingMakananState extends State<ListingMakanan> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _scrollController.addListener(_updateHeaderBlend);
   }
 
@@ -90,12 +92,24 @@ class _ListingMakananState extends State<ListingMakanan> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _scrollController.removeListener(_updateHeaderBlend);
     _scrollController.dispose();
     _headerState.dispose();
     _searchController.dispose();
     if (widget.profile == null) _profile.dispose();
     super.dispose();
+  }
+
+  // Scaffold milik navigasi utama menghapus inset keyboard dari MediaQuery,
+  // jadi keyboard dibaca langsung dari jendela. Saat keyboard muncul, daftar
+  // hasil dinaikkan ke bawah bilah pencarian (seperti WhatsApp).
+  @override
+  void didChangeMetrics() {
+    if (!mounted) return;
+    final keyboardOpen = View.of(context).viewInsets.bottom > 0;
+    if (keyboardOpen && !_keyboardWasOpen) _revealResultsAboveKeyboard();
+    _keyboardWasOpen = keyboardOpen;
   }
 
   void _revealResultsAboveKeyboard() {
@@ -260,12 +274,6 @@ class _ListingMakananState extends State<ListingMakanan> {
     } else if (_sortBy == 'Stok terbanyak') {
       foods.sort((a, b) => b.portionsLeft.compareTo(a.portionsLeft));
     }
-
-    // Saat keyboard muncul, naikkan daftar hasil ke bawah bilah pencarian
-    // (seperti WhatsApp) supaya menu tidak tertutup keyboard.
-    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
-    if (keyboardOpen && !_keyboardWasOpen) _revealResultsAboveKeyboard();
-    _keyboardWasOpen = keyboardOpen;
 
     return Scaffold(
       backgroundColor: Colors.white,

@@ -21,7 +21,24 @@ class Peta extends StatefulWidget {
   State<Peta> createState() => _PetaState();
 }
 
-class _PetaState extends State<Peta> {
+class _PetaState extends State<Peta> with WidgetsBindingObserver {
+  bool _keyboardOpen = false;
+
+  // Scaffold milik navigasi utama menghapus inset keyboard dari MediaQuery,
+  // jadi keyboard dibaca langsung dari jendela.
+  @override
+  void didChangeMetrics() {
+    if (!mounted) return;
+    final open = View.of(context).viewInsets.bottom > 0;
+    if (open != _keyboardOpen) setState(() => _keyboardOpen = open);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
   late final _profile = widget.profile ?? UserProfileStore();
   late final _chatStore = widget.chatStore ?? ChatStore();
   final _search = TextEditingController();
@@ -44,6 +61,7 @@ class _PetaState extends State<Peta> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _search.dispose();
     _sheet.dispose();
     if (widget.profile == null) _profile.dispose();
@@ -124,7 +142,7 @@ class _PetaState extends State<Peta> {
       builder: (context, child) {
         final foods = _foods;
         // Dibaca di atas Scaffold karena Scaffold menghapus inset keyboard dari body.
-        final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+        final keyboardOpen = _keyboardOpen;
         return Scaffold(
           backgroundColor: Colors.white,
           body: Column(
@@ -332,7 +350,7 @@ class _PetaState extends State<Peta> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (MediaQuery.viewInsetsOf(context).bottom == 0)
+            if (!_keyboardOpen)
               Material(
                 color: Colors.transparent,
                 child: InkWell(
@@ -401,8 +419,7 @@ class _PetaState extends State<Peta> {
                   ),
                 ),
               ),
-            if (MediaQuery.viewInsetsOf(context).bottom == 0)
-              const SizedBox(height: 10),
+            if (!_keyboardOpen) const SizedBox(height: 10),
             AppSearchBar(
               controller: _search,
               hintText: 'Cari makanan atau toko...',
