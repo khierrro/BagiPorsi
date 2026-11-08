@@ -34,6 +34,8 @@ class _ListingMakananState extends State<ListingMakanan> {
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
   final _greenAreaKey = GlobalKey();
+  final _resultsKey = GlobalKey();
+  bool _keyboardWasOpen = false;
   final _headerState = ValueNotifier<({double blend, double collapse})>((
     blend: 0,
     collapse: 0,
@@ -94,6 +96,28 @@ class _ListingMakananState extends State<ListingMakanan> {
     _searchController.dispose();
     if (widget.profile == null) _profile.dispose();
     super.dispose();
+  }
+
+  void _revealResultsAboveKeyboard() {
+    Future<void>.delayed(const Duration(milliseconds: 320), () {
+      if (!mounted || !_scrollController.hasClients) return;
+      final box = _resultsKey.currentContext?.findRenderObject();
+      if (box is! RenderBox || !box.attached) return;
+      final navbarBottom =
+          MediaQuery.paddingOf(context).top +
+          _toolbarHeight +
+          _locationExtent +
+          _searchExtent;
+      final target =
+          _scrollController.offset +
+          box.localToGlobal(Offset.zero).dy -
+          navbarBottom;
+      _scrollController.animateTo(
+        target.clamp(0.0, _scrollController.position.maxScrollExtent),
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   void _resetFilters() {
@@ -237,6 +261,12 @@ class _ListingMakananState extends State<ListingMakanan> {
       foods.sort((a, b) => b.portionsLeft.compareTo(a.portionsLeft));
     }
 
+    // Saat keyboard muncul, naikkan daftar hasil ke bawah bilah pencarian
+    // (seperti WhatsApp) supaya menu tidak tertutup keyboard.
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+    if (keyboardOpen && !_keyboardWasOpen) _revealResultsAboveKeyboard();
+    _keyboardWasOpen = keyboardOpen;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: NotificationListener<ScrollMetricsNotification>(
@@ -285,12 +315,18 @@ class _ListingMakananState extends State<ListingMakanan> {
             ),
             SliverToBoxAdapter(child: _buildCategories()),
             if (foods.isEmpty)
-              SliverToBoxAdapter(child: _buildEmptyState())
+              SliverToBoxAdapter(
+                child: KeyedSubtree(
+                  key: _resultsKey,
+                  child: _buildEmptyState(),
+                ),
+              )
             else
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                 sliver: SliverToBoxAdapter(
                   child: Column(
+                    key: _resultsKey,
                     children: [
                       for (final food in foods)
                         ListenableBuilder(

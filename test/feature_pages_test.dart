@@ -24,6 +24,28 @@ Widget app(Widget page, {double textScale = 1}) => MaterialApp(
 );
 
 void main() {
+  testWidgets('Beranda menaikkan hasil pencarian di atas keyboard', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetViewInsets);
+    final profile = UserProfileStore();
+    addTearDown(profile.dispose);
+    await tester.pumpWidget(app(ListingMakanan(profile: profile)));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'roti');
+    await tester.pumpAndSettle();
+    tester.view.viewInsets = const FakeViewPadding(bottom: 330);
+    await tester.pumpAndSettle(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle(const Duration(seconds: 1));
+    final card = tester.getBottomLeft(find.byType(FoodCard).first);
+    expect(card.dy, lessThan(844 - 330));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Peta menampilkan hasil di atas keyboard saat mengetik', (
     tester,
   ) async {
