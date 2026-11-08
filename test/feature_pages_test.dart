@@ -24,6 +24,27 @@ Widget app(Widget page, {double textScale = 1}) => MaterialApp(
 );
 
 void main() {
+  testWidgets('Peta menampilkan hasil di atas keyboard saat mengetik', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    tester.view.viewInsets = const FakeViewPadding(bottom: 330);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetViewInsets);
+    final profile = UserProfileStore();
+    addTearDown(profile.dispose);
+    await tester.pumpWidget(app(Peta(profile: profile)));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'roti');
+    await tester.pumpAndSettle();
+    expect(find.text('AREA PENCARIAN'), findsNothing);
+    final card = tester.getBottomLeft(find.text('Lihat makanan').first);
+    expect(card.dy, lessThan(844 - 330));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Peta memfilter katalog, menyimpan favorit, dan membuka detail', (
     tester,
   ) async {
@@ -48,6 +69,8 @@ void main() {
     );
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Simpan favorit').first);
+    await tester.pumpAndSettle();
+    expect(profile.favorites, isNotEmpty);
     await tester.pumpAndSettle();
     expect(profile.isFavorite('Toko Roti Prima'), isTrue);
     await tester.tap(find.text('Lihat makanan').first);
@@ -202,6 +225,8 @@ void main() {
           )
           .first,
     );
+    await tester.ensureVisible(find.byTooltip('Simpan favorit').first);
+    await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Simpan favorit').first);
     await tester.pumpAndSettle();
     expect(profile.favorites, isNotEmpty);
